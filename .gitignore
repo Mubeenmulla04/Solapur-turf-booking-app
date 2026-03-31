@@ -1,0 +1,47 @@
+# Environments
+.env
+
+# Logs
+*.log
+*.err
+logs/
+
+# Mac / Windows system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.iws
+
+# Backups
+*.bak
+
+# --- Spring Boot Backend ---
+backend-springboot/target/
+backend-springboot/build/
+backend-springboot/.mvn/wrapper/maven-wrapper.jar
+!backend-springboot/**/src/main/**/target/
+!backend-springboot/**/src/test/**/target/
+backend-springboot/.sts4-cache/
+backend-springboot/.classpath
+backend-springboot/.project
+backend-springboot/.settings/
+
+# --- Flutter App ---
+solapur_turf_app/.dart_tool/
+solapur_turf_app/.flutter-plugins-dependencies
+solapur_turf_app/.pub-cache/
+solapur_turf_app/.pub/
+solapur_turf_app/build/
+solapur_turf_app/coverage/
+solapur_turf_app/app.*.symbols
+solapur_turf_app/app.*.map.json
+solapur_turf_app/android/app/debug/
+solapur_turf_app/android/app/profile/
+solapur_turf_app/android/app/release/
+solapur_turf_app/android/.gradle/
+solapur_turf_app/android/local.properties

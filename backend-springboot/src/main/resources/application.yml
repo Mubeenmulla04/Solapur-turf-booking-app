@@ -1,0 +1,48 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: solapur-turf-backend
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/turf_booking_db
+    username: postgres
+    password: root
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # IMPORTANT: This must be nested under spring:
+  # Removing SNAKE_CASE to keep camelCase in JSON (matching Flutter models)
+  # If you want snake_case, update Flutter models too. Keeping camelCase is simpler.
+  jackson:
+    default-property-inclusion: non_null
+
+jwt:
+  secret: solapur-turf-booking-super-secret-key-that-must-be-long-enough-2024
+  expiration: 86400000 # 24 hours in ms
+  refresh-expiration: 604800000 # 7 days in ms
+
+razorpay:
+  key:
+    id: rzp_test_1DP5mmOlF5G5ag
+    secret: thisMustBeYourSecret
+
+logging:
+  level:
+    com.solapur.turf: DEBUG
+    org.springframework.security: DEBUG

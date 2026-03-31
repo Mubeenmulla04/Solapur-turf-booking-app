@@ -1,0 +1,18 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    # Freezed puts @JsonKey on factory constructor params — linter wrongly flags
+    # these as invalid_annotation_target. The generated code is correct.
+    invalid_annotation_target: ignore
+    # Riverpod codegen generates XxxRef types alongside plain Ref usage.
+    deprecated_member_use_from_same_package: ignore
+    # flutter_riverpod re-exports riverpod_annotation elements.
+    unnecessary_import: ignore
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+
+linter:
+  rules:
+    avoid_print: false
