@@ -17,18 +17,26 @@ import 'owner_settlement_screen.dart';
 final _ownerStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final dio = ref.watch(apiClientProvider);
   try {
-    // Fetch live data directly from the owner profile
-    final res = await dio.get('/owners/me');
-    if (res.data != null && res.data['data'] is Map) {
-      final data = res.data['data'] as Map<String, dynamic>;
-      final turfIds = data['turfIds'] as List?;
+    // Fetch live profile and actual backend stats in parallel
+    final resList = await Future.wait([
+      dio.get('/owners/me'),
+      dio.get('/bookings/owner-stats'),
+    ]);
+    
+    final meRes = resList[0];
+    final statsRes = resList[1];
+
+    if (meRes.data != null && meRes.data['data'] is Map) {
+      final meData = meRes.data['data'] as Map<String, dynamic>;
+      final statsData = statsRes.data['data'] as Map<String, dynamic>? ?? {};
+      final turfIds = meData['turfIds'] as List?;
+      
       return {
         'turfId': (turfIds != null && turfIds.isNotEmpty) ? turfIds.first : null,
-        'todayRevenue': data['totalEarnings'] ?? 0,
-        // Mock remaining KPIs until full analytic endpoint is implemented
-        'weeklyRevenue': (data['totalEarnings'] ?? 0) * 0.8, 
-        'occupancyRate': 85,
-        'pendingSettlements': data['pendingSettlement'] ?? 0,
+        'todayRevenue': statsData['todayRevenue'] ?? 0,
+        'weeklyRevenue': statsData['weeklyRevenue'] ?? 0,
+        'occupancyRate': statsData['occupancyRate'] ?? 0,
+        'pendingSettlements': statsData['pendingSettlements'] ?? 0,
       };
     }
     throw Exception('No data');

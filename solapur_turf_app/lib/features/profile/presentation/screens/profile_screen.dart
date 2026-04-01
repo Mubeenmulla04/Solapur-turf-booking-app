@@ -139,7 +139,12 @@ class ProfileScreen extends ConsumerWidget {
                             iconColor: AppColors.warning,
                             onTap: () {
                               HapticFeedback.lightImpact();
-                              context.push('/user/wallet');
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Loyalty Points system coming soon!'),
+                                  backgroundColor: AppColors.warning,
+                                ),
+                              );
                             },
                           ),
                         ),

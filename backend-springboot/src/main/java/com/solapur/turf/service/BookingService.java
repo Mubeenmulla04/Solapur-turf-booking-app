@@ -375,8 +375,17 @@ public class BookingService {
                 pendingSettlements++;
         }
 
+        // Calculate a realistic dynamic occupancy rate (last 7 days)
+        long turfsCount = turfListingRepository.findByOwnerId(owner.getId()).size();
+        long availableSlotsLastWeek = Math.max(1, turfsCount * 14 * 7); // ~14 hours per day per turf
+        long recentBookings = ownerBookings.stream()
+                .filter(b -> (b.getBookingStatus() == BookingStatus.CONFIRMED || b.getBookingStatus() == BookingStatus.COMPLETED))
+                .filter(b -> !b.getBookingDate().isBefore(weekAgo) && !b.getBookingDate().isAfter(today))
+                .count();
+        int occupancyRate = (int) Math.min(100, (recentBookings * 100) / availableSlotsLastWeek);
+
         return Map.of("todayRevenue", todayRevenue, "weeklyRevenue", weeklyRevenue,
-                "occupancyRate", 75, "pendingSettlements", pendingSettlements);
+                "occupancyRate", occupancyRate, "pendingSettlements", pendingSettlements);
     }
 
     public Map<String, Object> getOwnerAnalytics(UUID userId) {
@@ -384,7 +393,10 @@ public class BookingService {
         if (owner == null) return Map.of("heatmap", List.of(), "topSlots", List.of(),
                 "popularSports", List.of(), "totalBookings", 0, "totalRevenue", BigDecimal.ZERO);
 
-        List<Booking> ownerBookings = bookingRepository.findAllByTurfOwnerId(owner.getId());
+        List<Booking> ownerBookings = bookingRepository.findAllByTurfOwnerId(owner.getId())
+                .stream()
+                .filter(b -> b.getBookingStatus() != BookingStatus.CANCELLED)
+                .collect(java.util.stream.Collectors.toList());
         LocalDate today = LocalDate.now();
 
         // 7-day heatmap

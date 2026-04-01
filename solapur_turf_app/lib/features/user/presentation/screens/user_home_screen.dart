@@ -152,10 +152,29 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
     final bookingsAsync = ref.watch(myBookingsProvider);
     final tournsAsync = ref.watch(_homeTournamentsProvider);
 
-    // Find next upcoming confirmed booking
-    final nextBooking = bookingsAsync.valueOrNull?.where((b) =>
-        b.bookingStatus == BookingStatus.confirmed ||
-        b.bookingStatus == BookingStatus.pending).firstOrNull;
+    // Find next upcoming confirmed booking that hasn't ended yet
+    final activeBookings = bookingsAsync.valueOrNull?.where((b) {
+      if (b.bookingStatus != BookingStatus.confirmed && b.bookingStatus != BookingStatus.pending) return false;
+      try {
+        final t = b.endTime.split(':').length == 2 ? '${b.endTime}:00' : b.endTime;
+        return DateTime.parse('${b.bookingDate} $t').isAfter(DateTime.now());
+      } catch (_) {
+        return true; // Fallback if parse fails
+      }
+    }).toList();
+
+    // Sort ascending by date & time to find the most immediate upcoming booking
+    activeBookings?.sort((a, b) {
+      try {
+        final aT = a.startTime.split(':').length == 2 ? '${a.startTime}:00' : a.startTime;
+        final bT = b.startTime.split(':').length == 2 ? '${b.startTime}:00' : b.startTime;
+        return DateTime.parse('${a.bookingDate} $aT').compareTo(DateTime.parse('${b.bookingDate} $bT'));
+      } catch (_) {
+        return 0;
+      }
+    });
+    
+    final nextBooking = activeBookings?.firstOrNull;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -337,7 +356,10 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
                               label: 'Squads',
                               color: const Color(0xFFFFF3E0),
                               iconColor: const Color(0xFFE65100),
-                              onTap: () => context.go('/user/teams'),
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                _showSquadOptions(context);
+                              },
                             ),
                           ),
                           const Gap(12),
@@ -405,15 +427,18 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
                             ),
                           ),
                           data: (turfs) {
-                            final localTurfs = turfs
-                                .where((t) => t.city.toLowerCase() == cityOnly.toLowerCase())
+                            var localTurfs = turfs
+                                .where((t) => t.city.toLowerCase().contains(cityOnly.toLowerCase()) || cityOnly.toLowerCase().contains(t.city.toLowerCase()))
                                 .toList();
+                            if (localTurfs.isEmpty) {
+                              localTurfs = turfs.toList(); // Fallback to all turfs for empty dashboard
+                            }
                             if (localTurfs.isEmpty) {
                               return Center(
                                 child: EmptyStateWidget(
                                   icon: Icons.sports_soccer,
                                   title: 'No turfs found',
-                                  subtitle: 'Not available in $cityOnly',
+                                  subtitle: 'Not available yet',
                                 ),
                               );
                             }
@@ -751,6 +776,78 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showSquadOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: AppColors.backgroundLight,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Squads',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const Gap(8),
+            const Text(
+              'Manage your teams or join a new one with a code.',
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondaryLight),
+            ),
+            const Gap(24),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.add_circle_outline, color: Color(0xFF2E7D32)),
+              ),
+              title: const Text('Create Squad', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Form a new team and invite your friends'),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.go('/user/teams/create');
+              },
+            ),
+            const Gap(8),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: const Color(0xFFE3F2FD), borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.group_add_rounded, color: Color(0xFF1565C0)),
+              ),
+              title: const Text('Join Squad', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('Use a team code to join an existing squad'),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.go('/user/teams/join');
+              },
+            ),
+            const Gap(8),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.groups_rounded, color: Color(0xFFE65100)),
+              ),
+              title: const Text('My Squads', style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text('View and manage your current teams'),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.go('/user/teams');
+              },
+            ),
+            const Gap(20),
+          ],
+        ),
       ),
     );
   }

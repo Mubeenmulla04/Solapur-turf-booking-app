@@ -326,7 +326,7 @@ class _HeatmapChart extends StatelessWidget {
       child: Column(
         children: [
           SizedBox(
-            height: 180,
+            height: 210,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: heatmap.map((day) {
