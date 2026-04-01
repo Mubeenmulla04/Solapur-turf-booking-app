@@ -258,9 +258,7 @@ class _TurfBrowseScreenState extends ConsumerState<TurfBrowseScreen> {
               // ── 5. Turfs List ──
               turfsAsync.when(
                 loading: () => const SliverFillRemaining(
-                  child: Center(
-                      child: CircularProgressIndicator(
-                          color: AppColors.primary)),
+                  child: AppLoadingIndicator(message: 'Finding best turfs...'),
                 ),
                 error: (e, _) => SliverFillRemaining(
                   child: AppErrorWidget(

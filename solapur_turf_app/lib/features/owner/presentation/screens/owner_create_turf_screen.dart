@@ -12,8 +12,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
 
+import '../../../turf/domain/entities/turf_listing.dart';
+
 class OwnerCreateTurfScreen extends ConsumerStatefulWidget {
-  const OwnerCreateTurfScreen({super.key});
+  final TurfListing? editTurf;
+  const OwnerCreateTurfScreen({super.key, this.editTurf});
 
   @override
   ConsumerState<OwnerCreateTurfScreen> createState() => _OwnerCreateTurfScreenState();
@@ -40,6 +43,53 @@ class _OwnerCreateTurfScreenState extends ConsumerState<OwnerCreateTurfScreen> {
   List<File> _uploadedImages = [];
   TimeOfDay _openTime = const TimeOfDay(hour: 6, minute: 0); // 6 AM
   TimeOfDay _closeTime = const TimeOfDay(hour: 23, minute: 0); // 11 PM
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.editTurf != null) {
+      _initEditData(widget.editTurf!);
+    } else {
+      _loadOwnerData();
+    }
+  }
+
+  void _initEditData(TurfListing turf) {
+    _nameCtrl.text = turf.turfName;
+    _descCtrl.text = turf.description ?? '';
+    _addressCtrl.text = turf.address;
+    _cityCtrl.text = turf.city;
+    _stateCtrl.text = turf.state;
+    _pinCodeCtrl.text = turf.pincode;
+    _pitchSizeCtrl.text = turf.size ?? '';
+    _hourlyRateCtrl.text = turf.hourlyRate.toString();
+    _peakHourlyRateCtrl.text = turf.peakHourRate?.toString() ?? '';
+    _sport = turf.sportType.name.toUpperCase();
+    _surface = turf.surfaceType.name.toUpperCase();
+    _isIndoor = turf.size?.toLowerCase().contains('indoor') ?? false;
+
+    if (turf.createdAt != null) {}
+  }
+
+  Future<void> _loadOwnerData() async {
+    try {
+      final res = await ref.read(apiClientProvider).get('/owners/me');
+      if (res.data != null && res.data['data'] is Map) {
+        final data = res.data['data'] as Map<String, dynamic>;
+        if (mounted) {
+          setState(() {
+            _nameCtrl.text = data['businessName'] ?? '';
+            _addressCtrl.text = data['addressLine1'] ?? '';
+            _cityCtrl.text = data['city'] ?? 'Solapur';
+            _stateCtrl.text = data['state'] ?? 'Maharashtra';
+            _pinCodeCtrl.text = data['pinCode'] ?? '';
+          });
+        }
+      }
+    } catch (e) {
+      // Ignore API errors if profile isn't fully filled or isn't reachable
+    }
+  }
 
   @override
   void dispose() {
@@ -96,8 +146,10 @@ class _OwnerCreateTurfScreenState extends ConsumerState<OwnerCreateTurfScreen> {
       String formatTime(TimeOfDay td) => 
          '${td.hour.toString().padLeft(2, '0')}:${td.minute.toString().padLeft(2, '0')}:00';
 
-      // 1. Create the Turf Listing
-      final createRes = await dio.post('/turfs', data: {
+      // 1. Create or Update the Turf Listing
+      final isEdit = widget.editTurf != null;
+      final endpoint = isEdit ? '/turfs/${widget.editTurf!.turfId}' : '/turfs';
+      final payload = {
         'turfName': _nameCtrl.text.trim(),
         'description': _descCtrl.text.trim(),
         'address': _addressCtrl.text.trim(),
@@ -110,12 +162,15 @@ class _OwnerCreateTurfScreenState extends ConsumerState<OwnerCreateTurfScreen> {
         'isIndoor': _isIndoor,
         'hourlyRate': double.parse(_hourlyRateCtrl.text.trim()),
         'peakHourRate': _peakHourlyRateCtrl.text.trim().isNotEmpty ? double.parse(_peakHourlyRateCtrl.text.trim()) : null,
-        // Added for partial Medium fix
         'openingTime': formatTime(_openTime),
         'closingTime': formatTime(_closeTime),
-      });
+      };
 
-      final turfId = createRes.data['data']['turfId'];
+      final createRes = isEdit
+          ? await dio.put(endpoint, data: payload)
+          : await dio.post(endpoint, data: payload);
+
+      final turfId = isEdit ? widget.editTurf!.turfId : createRes.data['data']['turfId'];
 
       // 2. Upload Images if any
       if (_uploadedImages.isNotEmpty && turfId != null) {
@@ -136,13 +191,17 @@ class _OwnerCreateTurfScreenState extends ConsumerState<OwnerCreateTurfScreen> {
       if (mounted) {
         HapticFeedback.heavyImpact();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Turf registered successfully! 🏗️'),
+          SnackBar(
+            content: Text(widget.editTurf != null ? 'Turf updated successfully! 🏗️' : 'Turf registered successfully! 🏗️'),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
           ),
         );
-        context.go('/owner/dashboard');
+        if (widget.editTurf != null) {
+          Navigator.pop(context); // Go back if modifying
+        } else {
+          context.go('/owner/dashboard');
+        }
       }
     } catch (e, st) {
       if (mounted) {
@@ -179,7 +238,7 @@ class _OwnerCreateTurfScreenState extends ConsumerState<OwnerCreateTurfScreen> {
         iconTheme: IconThemeData(color: t.colorScheme.onSurface),
         centerTitle: true,
         title: Text(
-          'Register New Turf',
+          widget.editTurf != null ? 'Edit Turf' : 'Register New Turf',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: t.colorScheme.onSurface),
         ),
       ),
@@ -216,9 +275,9 @@ class _OwnerCreateTurfScreenState extends ConsumerState<OwnerCreateTurfScreen> {
                             child: const Text('NEW PROPERTY', style: TextStyle(color: Color(0xFF10B981), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
                           ),
                           const Gap(16),
-                          const Text('Register Turf', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1, color: Colors.white)),
+                          Text(widget.editTurf != null ? 'Update Details' : 'Register Turf', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1, color: Colors.white)),
                           const Gap(8),
-                          Text('Expand your business by listing a new playground and accepting bookings instantly.', style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7), height: 1.4, fontWeight: FontWeight.w500)),
+                          Text(widget.editTurf != null ? 'Modify your property specifications and pricing.' : 'Expand your business by listing a new playground and accepting bookings instantly.', style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7), height: 1.4, fontWeight: FontWeight.w500)),
                         ],
                       ),
                     ],
@@ -533,6 +592,14 @@ class _OwnerCreateTurfScreenState extends ConsumerState<OwnerCreateTurfScreen> {
                           ],
                         ),
                 ),
+                if (widget.editTurf != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel Edit', style: TextStyle(color: AppColors.textSecondaryLight, fontSize: 16)),
+                    ),
+                  ),
                 const Gap(40),
               ],
             ),

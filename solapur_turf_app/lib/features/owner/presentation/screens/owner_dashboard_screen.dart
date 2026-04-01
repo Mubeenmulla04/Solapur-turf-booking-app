@@ -175,6 +175,15 @@ class OwnerDashboardScreen extends ConsumerWidget {
                         child: Column(
                           children: [
                             _QuickActionTile(
+                              icon: Icons.stadium_rounded,
+                              title: 'Manage Turfs',
+                              subtitle: 'View, update, or remove your listed turfs',
+                              iconBg: AppColors.success.withOpacity(0.1),
+                              iconColor: AppColors.success,
+                              onTap: () => context.go('/owner/turfs'),
+                            ),
+                            const Divider(height: 1, indent: 64),
+                            _QuickActionTile(
                               icon: Icons.book_online_outlined,
                               title: 'Manage Bookings',
                               subtitle: 'View, approve or cancel booked slots',

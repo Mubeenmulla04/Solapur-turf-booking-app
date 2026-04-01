@@ -7,6 +7,7 @@ import '../../../../core/errors/failures.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../domain/entities/booking.dart';
 import '../providers/booking_provider.dart';
@@ -36,38 +37,18 @@ class BookingHistoryScreen extends ConsumerWidget {
         ),
       ),
       body: bookingsAsync.when(
-        loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => const AppLoadingIndicator(message: 'Fetching your bookings...'),
         error: (e, _) => AppErrorWidget(
           message: e is Failure ? e.userMessage : e.toString(),
           onRetry: () => ref.invalidate(myBookingsProvider),
         ),
         data: (bookings) => bookings.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceLight,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.dividerLight),
-                      ),
-                      child: const Icon(Icons.receipt_long_outlined,
-                          size: 48, color: AppColors.textHint),
-                    ),
-                    const Gap(24),
-                    const Text('No Bookings Found',
-                        style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimaryLight)),
-                    const Gap(8),
-                    const Text('Your turf bookings will appear here.',
-                        style: TextStyle(color: AppColors.textSecondaryLight)),
-                  ],
-                ),
+            ? EmptyStateWidget(
+                icon: Icons.receipt_long_outlined,
+                title: 'No Bookings Found',
+                subtitle: 'Your turf bookings will appear here.',
+                actionLabel: 'Book Now',
+                onAction: () => context.go('/user/browse'),
               )
             : RefreshIndicator(
                 onRefresh: () async => ref.invalidate(myBookingsProvider),

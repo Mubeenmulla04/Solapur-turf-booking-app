@@ -11,6 +11,7 @@ import '../features/turf/presentation/screens/turf_detail_screen.dart';
 import '../features/booking/presentation/screens/booking_screen.dart';
 import '../features/booking/presentation/screens/booking_history_screen.dart';
 import '../features/booking/presentation/screens/booking_confirmation_screen.dart';
+import '../features/booking/domain/entities/booking.dart';
 import '../features/teams/presentation/screens/my_teams_screen.dart';
 import '../features/teams/presentation/screens/create_team_screen.dart';
 import '../features/teams/presentation/screens/join_team_screen.dart';
@@ -21,6 +22,7 @@ import '../features/owner/presentation/screens/owner_dashboard_screen.dart';
 import '../features/owner/presentation/screens/owner_bookings_screen.dart';
 import '../features/owner/presentation/screens/owner_profile_screen.dart';
 import '../features/owner/presentation/screens/owner_create_turf_screen.dart';
+import '../features/owner/presentation/screens/owner_manage_turfs_screen.dart';
 import '../features/tournaments/presentation/screens/create_tournament_screen.dart';
 import '../features/admin/presentation/screens/admin_dashboard_screen.dart';
 import '../features/admin/presentation/screens/admin_bookings_screen.dart';
@@ -210,6 +212,11 @@ GoRouter appRouter(Ref ref) {
             path: '/owner/turfs/create',
             name: 'createTurf',
             builder: (_, __) => const OwnerCreateTurfScreen(),
+          ),
+          GoRoute(
+            path: '/owner/turfs',
+            name: 'manageTurfs',
+            builder: (_, __) => const OwnerManageTurfsScreen(),
           ),
           GoRoute(
             path: '/owner/tournaments/create',

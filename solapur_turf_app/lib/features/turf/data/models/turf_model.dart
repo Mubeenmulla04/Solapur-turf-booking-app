@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../domain/entities/turf_listing.dart';
+import '../../../../core/constants/app_constants.dart';
 
 part 'turf_model.freezed.dart';
 part 'turf_model.g.dart';
@@ -84,7 +85,14 @@ extension TurfListingModelX on TurfListingModel {
         latitude: latitude != null ? double.tryParse(latitude.toString()) : null,
         longitude:
             longitude != null ? double.tryParse(longitude.toString()) : null,
-        imageUrls: images?.map((i) => i.imageUrl).toList(),
+        imageUrls: images?.map((i) {
+          final url = i.imageUrl;
+          if (url.startsWith('/')) {
+            final baseUrl = AppConstants.apiBaseUrl.replaceAll('/api', '');
+            return '$baseUrl$url';
+          }
+          return url;
+        }).toList(),
       );
 
   SurfaceType _parseSurface(String s) => switch (s.toUpperCase()) {

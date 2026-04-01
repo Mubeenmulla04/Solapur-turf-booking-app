@@ -15,7 +15,6 @@ class BookingModel with _$BookingModel {
     @JsonKey(name: 'finalAmount') required dynamic totalAmount,
     @JsonKey(name: 'advanceAmount', defaultValue: 0) required dynamic onlineAmount,
     @JsonKey(defaultValue: 0) dynamic cashAmount,
-    @JsonKey(defaultValue: 0) dynamic advanceAmount,
     required String paymentMethod,
     required String paymentStatus,
     required String bookingStatus,

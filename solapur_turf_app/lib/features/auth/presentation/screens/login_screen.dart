@@ -104,15 +104,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         // ── Branding Logo ────────────────────────────
                         Center(
                           child: Column(children: [
-                            Container(
-                              padding: const EdgeInsets.all(18),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withOpacity(0.08),
-                                shape: BoxShape.circle,
-                                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.2)),
+                            ClipOval(
+                              child: Image.asset(
+                                'assets/images/splash-logo1.jpeg',
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.sports_soccer_rounded,
+                                  size: 48,
+                                  color: Color(0xFF10B981),
+                                ),
                               ),
-                              child: const Icon(Icons.sports_soccer_rounded,
-                                  size: 48, color: Color(0xFF10B981)),
                             ),
                             const Gap(16),
                             const Text(

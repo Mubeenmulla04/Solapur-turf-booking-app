@@ -34,14 +34,14 @@ Dio _buildDio(TokenStorage storage) {
     CacheInterceptor(),
     RetryInterceptor(dio),
     ErrorInterceptor(),
-    if (AppConstants.enableLogging)
-      PrettyDioLogger(
-        requestHeader: false,
-        requestBody: true,
-        responseBody: true,
-        error: true,
-        compact: AppConstants.compactLogging,
-      ),
+  if (AppConstants.enableLogging)
+    PrettyDioLogger(
+      requestHeader: false,
+      requestBody: true,
+      responseBody: true,
+      error: true,
+      compact: AppConstants.compactLogging,
+    ),
   ]);
 
   return dio;

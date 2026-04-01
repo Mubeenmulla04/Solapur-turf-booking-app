@@ -6,6 +6,7 @@ import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../../../core/constants/app_constants.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
@@ -141,7 +142,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     ref.listen(bookingNotifierProvider, (_, next) {
       next.mapOrNull(
         awaitingPayment: (s) => _openRazorpay(s.result),
-        success: (_) {
+        success: (s) {
           // Invalidate both providers so the slot grid and bookings list refresh
           ref.invalidate(myBookingsProvider);
           ref.invalidate(

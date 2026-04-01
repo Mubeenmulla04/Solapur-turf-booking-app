@@ -113,12 +113,12 @@ class AdminBookingsScreen extends ConsumerWidget {
   }
 }
 
-class _AdminBookingTile extends StatelessWidget {
+class _AdminBookingTile extends ConsumerWidget {
   final Map<String, dynamic> j;
   const _AdminBookingTile({required this.j});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final user = j['user'] as Map<String, dynamic>? ?? {};
     final turf = j['turf'] as Map<String, dynamic>? ?? {};
     final status = j['booking_status'] as String? ?? j['bookingStatus'] as String? ?? '';
@@ -276,7 +276,7 @@ class _AdminBookingTile extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () => _showRefundDialog(context, ref),
+                  onPressed: () => _showRefundDialog(context, ref, amount, bookingId),
                   icon: const Icon(Icons.undo_rounded, size: 18),
                   label: const Text('Process Refund'),
                   style: ElevatedButton.styleFrom(
@@ -293,7 +293,7 @@ class _AdminBookingTile extends StatelessWidget {
     );
   }
 
-  void _showRefundDialog(BuildContext context, WidgetRef ref) {
+  void _showRefundDialog(BuildContext context, WidgetRef ref, double amount, String bookingId) {
     final amountController = TextEditingController(text: amount.toString());
     showDialog(
       context: context,

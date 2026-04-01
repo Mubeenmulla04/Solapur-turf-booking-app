@@ -33,9 +33,7 @@ class _TurfDetailScreenState extends ConsumerState<TurfDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: turfAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
+        loading: () => const AppLoadingIndicator(message: 'Loading details...'),
         error: (e, _) => Scaffold(
           appBar: AppBar(
             backgroundColor: Colors.transparent,

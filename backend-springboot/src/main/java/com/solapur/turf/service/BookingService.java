@@ -8,6 +8,7 @@ import com.solapur.turf.dto.PaymentOrderRequest;
 import com.solapur.turf.dto.PaymentOrderResponse;
 import com.solapur.turf.dto.PageResponse;
 import com.solapur.turf.dto.TurfListingDto;
+import com.solapur.turf.dto.UserDto;
 import com.solapur.turf.entity.Booking;
 import com.solapur.turf.entity.DynamicPricingRule;
 import com.solapur.turf.entity.TurfListing;
@@ -554,10 +555,19 @@ public class BookingService {
         return v != null ? v : BigDecimal.ZERO;
     }
 
-    // ─── DTO mapping ──────────────────────────────────────────────────────────
-
     private BookingDto mapToDto(Booking booking) {
         TurfListingDto turfDto = turfService.mapToDto(booking.getTurf());
+
+        UserDto userDto = null;
+        if (booking.getUser() != null) {
+            userDto = UserDto.builder()
+                    .userId(booking.getUser().getId().toString())
+                    .email(booking.getUser().getEmail())
+                    .phone(booking.getUser().getPhone())
+                    .fullName(booking.getUser().getFullName())
+                    .role(booking.getUser().getRole())
+                    .build();
+        }
 
         return BookingDto.builder()
                 .bookingId(booking.getId().toString())
@@ -585,6 +595,7 @@ public class BookingService {
                 .oldDateTime(booking.getOldDateTime())
                 .createdAt(booking.getCreatedAt())
                 .updatedAt(booking.getUpdatedAt())
+                .user(userDto)
                 .turf(turfDto)
                 .build();
     }

@@ -12,11 +12,11 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Map /uploads/** URLs to the corresponding local directory in the project root
+        // Map /api/files/** URLs to the corresponding local directory in the project root
         Path uploadDir = Paths.get("uploads");
         String uploadPath = uploadDir.toFile().getAbsolutePath();
         
-        registry.addResourceHandler("/uploads/**")
+        registry.addResourceHandler("/api/files/**")
                 .addResourceLocations("file:" + uploadPath + "/");
     }
 }

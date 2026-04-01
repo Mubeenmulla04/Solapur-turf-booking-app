@@ -31,8 +31,6 @@ mixin _$BookingModel {
   dynamic get onlineAmount => throw _privateConstructorUsedError;
   @JsonKey(defaultValue: 0)
   dynamic get cashAmount => throw _privateConstructorUsedError;
-  @JsonKey(defaultValue: 0)
-  dynamic get advanceAmount => throw _privateConstructorUsedError;
   String get paymentMethod => throw _privateConstructorUsedError;
   String get paymentStatus => throw _privateConstructorUsedError;
   String get bookingStatus => throw _privateConstructorUsedError;
@@ -68,7 +66,6 @@ abstract class $BookingModelCopyWith<$Res> {
       @JsonKey(name: 'finalAmount') dynamic totalAmount,
       @JsonKey(name: 'advanceAmount', defaultValue: 0) dynamic onlineAmount,
       @JsonKey(defaultValue: 0) dynamic cashAmount,
-      @JsonKey(defaultValue: 0) dynamic advanceAmount,
       String paymentMethod,
       String paymentStatus,
       String bookingStatus,
@@ -103,7 +100,6 @@ class _$BookingModelCopyWithImpl<$Res, $Val extends BookingModel>
     Object? totalAmount = freezed,
     Object? onlineAmount = freezed,
     Object? cashAmount = freezed,
-    Object? advanceAmount = freezed,
     Object? paymentMethod = null,
     Object? paymentStatus = null,
     Object? bookingStatus = null,
@@ -146,10 +142,6 @@ class _$BookingModelCopyWithImpl<$Res, $Val extends BookingModel>
       cashAmount: freezed == cashAmount
           ? _value.cashAmount
           : cashAmount // ignore: cast_nullable_to_non_nullable
-              as dynamic,
-      advanceAmount: freezed == advanceAmount
-          ? _value.advanceAmount
-          : advanceAmount // ignore: cast_nullable_to_non_nullable
               as dynamic,
       paymentMethod: null == paymentMethod
           ? _value.paymentMethod
@@ -208,7 +200,6 @@ abstract class _$$BookingModelImplCopyWith<$Res>
       @JsonKey(name: 'finalAmount') dynamic totalAmount,
       @JsonKey(name: 'advanceAmount', defaultValue: 0) dynamic onlineAmount,
       @JsonKey(defaultValue: 0) dynamic cashAmount,
-      @JsonKey(defaultValue: 0) dynamic advanceAmount,
       String paymentMethod,
       String paymentStatus,
       String bookingStatus,
@@ -241,7 +232,6 @@ class __$$BookingModelImplCopyWithImpl<$Res>
     Object? totalAmount = freezed,
     Object? onlineAmount = freezed,
     Object? cashAmount = freezed,
-    Object? advanceAmount = freezed,
     Object? paymentMethod = null,
     Object? paymentStatus = null,
     Object? bookingStatus = null,
@@ -284,10 +274,6 @@ class __$$BookingModelImplCopyWithImpl<$Res>
       cashAmount: freezed == cashAmount
           ? _value.cashAmount
           : cashAmount // ignore: cast_nullable_to_non_nullable
-              as dynamic,
-      advanceAmount: freezed == advanceAmount
-          ? _value.advanceAmount
-          : advanceAmount // ignore: cast_nullable_to_non_nullable
               as dynamic,
       paymentMethod: null == paymentMethod
           ? _value.paymentMethod
@@ -342,7 +328,6 @@ class _$BookingModelImpl implements _BookingModel {
       @JsonKey(name: 'advanceAmount', defaultValue: 0)
       required this.onlineAmount,
       @JsonKey(defaultValue: 0) this.cashAmount,
-      @JsonKey(defaultValue: 0) this.advanceAmount,
       required this.paymentMethod,
       required this.paymentStatus,
       required this.bookingStatus,
@@ -377,9 +362,6 @@ class _$BookingModelImpl implements _BookingModel {
   @JsonKey(defaultValue: 0)
   final dynamic cashAmount;
   @override
-  @JsonKey(defaultValue: 0)
-  final dynamic advanceAmount;
-  @override
   final String paymentMethod;
   @override
   final String paymentStatus;
@@ -407,7 +389,7 @@ class _$BookingModelImpl implements _BookingModel {
 
   @override
   String toString() {
-    return 'BookingModel(bookingId: $bookingId, turfId: $turfId, bookingDate: $bookingDate, startTime: $startTime, endTime: $endTime, totalAmount: $totalAmount, onlineAmount: $onlineAmount, cashAmount: $cashAmount, advanceAmount: $advanceAmount, paymentMethod: $paymentMethod, paymentStatus: $paymentStatus, bookingStatus: $bookingStatus, razorpayOrderId: $razorpayOrderId, razorpayPaymentId: $razorpayPaymentId, couponId: $couponId, discountAmount: $discountAmount, commissionAmount: $commissionAmount, turf: $turf)';
+    return 'BookingModel(bookingId: $bookingId, turfId: $turfId, bookingDate: $bookingDate, startTime: $startTime, endTime: $endTime, totalAmount: $totalAmount, onlineAmount: $onlineAmount, cashAmount: $cashAmount, paymentMethod: $paymentMethod, paymentStatus: $paymentStatus, bookingStatus: $bookingStatus, razorpayOrderId: $razorpayOrderId, razorpayPaymentId: $razorpayPaymentId, couponId: $couponId, discountAmount: $discountAmount, commissionAmount: $commissionAmount, turf: $turf)';
   }
 
   @override
@@ -429,8 +411,6 @@ class _$BookingModelImpl implements _BookingModel {
                 .equals(other.onlineAmount, onlineAmount) &&
             const DeepCollectionEquality()
                 .equals(other.cashAmount, cashAmount) &&
-            const DeepCollectionEquality()
-                .equals(other.advanceAmount, advanceAmount) &&
             (identical(other.paymentMethod, paymentMethod) ||
                 other.paymentMethod == paymentMethod) &&
             (identical(other.paymentStatus, paymentStatus) ||
@@ -462,7 +442,6 @@ class _$BookingModelImpl implements _BookingModel {
       const DeepCollectionEquality().hash(totalAmount),
       const DeepCollectionEquality().hash(onlineAmount),
       const DeepCollectionEquality().hash(cashAmount),
-      const DeepCollectionEquality().hash(advanceAmount),
       paymentMethod,
       paymentStatus,
       bookingStatus,
@@ -500,7 +479,6 @@ abstract class _BookingModel implements BookingModel {
       @JsonKey(name: 'advanceAmount', defaultValue: 0)
       required final dynamic onlineAmount,
       @JsonKey(defaultValue: 0) final dynamic cashAmount,
-      @JsonKey(defaultValue: 0) final dynamic advanceAmount,
       required final String paymentMethod,
       required final String paymentStatus,
       required final String bookingStatus,
@@ -533,9 +511,6 @@ abstract class _BookingModel implements BookingModel {
   @override
   @JsonKey(defaultValue: 0)
   dynamic get cashAmount;
-  @override
-  @JsonKey(defaultValue: 0)
-  dynamic get advanceAmount;
   @override
   String get paymentMethod;
   @override

@@ -51,5 +51,6 @@ public class BookingDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    private UserDto user;                     // full nested User for UI
     private TurfListingDto turf;              // full nested DTO for rich UI displays
 }
