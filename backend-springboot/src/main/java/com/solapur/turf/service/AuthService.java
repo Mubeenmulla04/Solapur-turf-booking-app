@@ -131,28 +131,31 @@ public class AuthService {
     // ─── Login ───────────────────────────────────────────────────────────────
 
     public AuthResponse login(LoginRequest request) {
-        try {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getIdentifier(),
-                            request.getPassword()));
-        } catch (AuthenticationException e) {
-            log.warn("Login failed for identifier: {}. Reason: {}", request.getIdentifier(), e.getMessage());
-            throw new ApiException("Invalid credentials", HttpStatus.UNAUTHORIZED);
-        }
-
+        // 1. Fetch user first to check status before Spring Security obscures the reason
         User user = userRepository.findByEmail(request.getIdentifier())
                 .orElseGet(() -> userRepository.findByPhone(request.getIdentifier())
-                        .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND)));
+                        .orElseThrow(() -> new ApiException("Invalid credentials", HttpStatus.UNAUTHORIZED)));
 
+        // 2. Check specific status triggers
         if (user.getRole() == UserRole.OWNER && !user.isVerified()) {
             throw new ApiException(
-                "Your account is pending admin approval. Please wait before logging in.",
+                "Your account is pending admin approval. Please wait for confirmation.",
                 HttpStatus.FORBIDDEN);
         }
 
         if (!user.isActive()) {
-            throw new ApiException("Your account has been deactivated. Please contact support.", HttpStatus.FORBIDDEN);
+            throw new ApiException("Your account is currently inactive. Please contact support.", HttpStatus.FORBIDDEN);
+        }
+
+        // 3. Perform standard authentication
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            user.getEmail(), // Use canonical email for auth
+                            request.getPassword()));
+        } catch (AuthenticationException e) {
+            log.warn("Authentication failed for user: {}. Reason: {}", user.getEmail(), e.getMessage());
+            throw new ApiException("Invalid credentials", HttpStatus.UNAUTHORIZED);
         }
 
         CustomUserDetails userDetails = new CustomUserDetails(user);
