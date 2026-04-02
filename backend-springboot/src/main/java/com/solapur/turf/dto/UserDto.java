@@ -18,7 +18,7 @@ public class UserDto {
     private List<String> imageUrls;
 
     @Builder.Default
-    private Double walletBalance = 0.0;
+    private java.math.BigDecimal walletBalance = java.math.BigDecimal.ZERO;
     @Builder.Default
     private Integer loyaltyPoints = 0;
 

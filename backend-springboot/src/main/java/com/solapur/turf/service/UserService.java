@@ -20,6 +20,7 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final com.solapur.turf.repository.UserWalletRepository userWalletRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserDto getUserProfile(UUID userId) {
@@ -80,6 +81,10 @@ public class UserService {
     }
 
     private UserDto mapToUserDto(User user) {
+        java.math.BigDecimal balance = userWalletRepository.findByUserId(user.getId())
+                .map(com.solapur.turf.entity.UserWallet::getBalance)
+                .orElse(java.math.BigDecimal.ZERO);
+
         return UserDto.builder()
                 .userId(user.getId().toString())
                 .email(user.getEmail())
@@ -87,7 +92,7 @@ public class UserService {
                 .fullName(user.getFullName())
                 .role(user.getRole())
                 .isActive(user.isActive())
-                .walletBalance(user.getWalletBalance() != null ? user.getWalletBalance() : 0.0)
+                .walletBalance(balance)
                 .loyaltyPoints(user.getLoyaltyPoints() != null ? user.getLoyaltyPoints() : 0)
                 .favoriteSports(user.getFavoriteSports())
                 .preferredTimeSlots(user.getPreferredTimeSlots())

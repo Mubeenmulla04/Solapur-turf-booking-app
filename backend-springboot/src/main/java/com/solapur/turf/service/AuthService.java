@@ -317,12 +317,18 @@ public class AuthService {
     }
 
     public UserDto mapToUserDto(User user) {
+        java.math.BigDecimal balance = userWalletRepository.findByUserId(user.getId())
+                .map(com.solapur.turf.entity.UserWallet::getBalance)
+                .orElse(java.math.BigDecimal.ZERO);
+
         return UserDto.builder()
                 .userId(user.getId().toString())
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .fullName(user.getFullName())
                 .role(user.getRole())
+                .walletBalance(balance)
+                .loyaltyPoints(user.getLoyaltyPoints() != null ? user.getLoyaltyPoints() : 0)
                 .build();
     }
 }

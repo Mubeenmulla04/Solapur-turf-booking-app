@@ -45,10 +45,6 @@ public class User extends BaseEntity {
     private boolean isActive = true;
 
     // --- Profile Stats & Preferences
-    @Column(name = "wallet_balance")
-    @Builder.Default
-    private Double walletBalance = 0.0;
-
     @Column(name = "loyalty_points")
     @Builder.Default
     private Integer loyaltyPoints = 0;
@@ -61,8 +57,4 @@ public class User extends BaseEntity {
 
     @Column(name = "fcm_token")
     private String fcmToken;
-
-    // Optional relation mapped by Wallet later
-    // @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    // private UserWallet wallet;
 }
