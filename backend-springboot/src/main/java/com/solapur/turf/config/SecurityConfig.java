@@ -57,6 +57,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/test/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/files/**").permitAll()
                 // ── API docs / Swagger ────────────────────────────────────
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 // ── Static resources & uploads ────────────────────────────

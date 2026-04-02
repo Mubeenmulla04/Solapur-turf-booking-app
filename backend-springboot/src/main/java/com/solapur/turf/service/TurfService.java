@@ -209,9 +209,14 @@ public class TurfService {
         return turf;
     }
 
-    public void updateTurfImages(UUID turfId, UUID userId, List<String> urls) {
+    public void updateTurfImages(UUID turfId, UUID userId, List<String> newUrls) {
         TurfListing turf = getTurfByIdAndOwnerId(turfId, userId);
-        turf.setImageUrls(urls);
+        List<String> currentUrls = turf.getImageUrls();
+        if (currentUrls == null) {
+            currentUrls = new java.util.ArrayList<>();
+        }
+        currentUrls.addAll(newUrls);
+        turf.setImageUrls(currentUrls);
         turfListingRepository.save(turf);
     }
 }
