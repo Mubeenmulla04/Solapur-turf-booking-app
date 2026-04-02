@@ -45,3 +45,10 @@ solapur_turf_app/android/app/profile/
 solapur_turf_app/android/app/release/
 solapur_turf_app/android/.gradle/
 solapur_turf_app/android/local.properties
+
+# Credentials
+firebase-service-account.json
+*.json
+!package.json
+!composer.json
+!pubspec.yaml

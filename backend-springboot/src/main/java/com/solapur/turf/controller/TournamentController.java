@@ -59,11 +59,25 @@ public class TournamentController {
         return ResponseEntity.ok(ApiResponse.created(created, "Tournament created successfully"));
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<Object>> registerTeam(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @Valid @RequestBody TournamentRegistrationRequest request) {
-        tournamentService.registerTeam(userDetails.getUser().getId(), request);
-        return ResponseEntity.ok(ApiResponse.success(null, "Team registered successfully"));
+    @PostMapping("/{id}/generate-bracket")
+    public ResponseEntity<ApiResponse<Object>> generateBracket(@PathVariable String id) {
+        tournamentService.generateKnockoutBracket(UUID.fromString(id));
+        return ResponseEntity.ok(ApiResponse.success(null, "Bracket generated successfully"));
+    }
+
+    @GetMapping("/{id}/matches")
+    public ResponseEntity<ApiResponse<List<com.solapur.turf.entity.TournamentMatch>>> getMatches(@PathVariable String id) {
+        // Simple entity return for now
+        return ResponseEntity.ok(ApiResponse.success(tournamentService.getMatches(UUID.fromString(id)), "Matches fetched"));
+    }
+
+    @PostMapping("/{id}/matches/{matchId}/score")
+    public ResponseEntity<ApiResponse<Object>> updateScore(
+            @PathVariable String id,
+            @PathVariable String matchId,
+            @RequestParam Integer scoreA,
+            @RequestParam Integer scoreB) {
+        tournamentService.updateMatchResult(UUID.fromString(id), UUID.fromString(matchId), scoreA, scoreB);
+        return ResponseEntity.ok(ApiResponse.success(null, "Score updated"));
     }
 }

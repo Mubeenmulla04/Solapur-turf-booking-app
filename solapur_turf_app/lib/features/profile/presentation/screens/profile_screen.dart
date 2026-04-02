@@ -138,14 +138,7 @@ class ProfileScreen extends ConsumerWidget {
                             icon: Icons.stars_rounded,
                             iconColor: AppColors.warning,
                             onTap: () {
-                              HapticFeedback.lightImpact();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Loyalty Points system coming soon!'),
-                                  backgroundColor: AppColors.warning,
-                                ),
-                              );
-                            },
+                            onTap: () => _showLoyaltyInfo(context, user?.loyaltyPoints ?? 0),
                           ),
                         ),
                       ],
@@ -368,6 +361,127 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  void _showLoyaltyInfo(BuildContext context, int points) {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(28),
+        decoration: const BoxDecoration(
+          color: AppColors.backgroundLight,
+          borderRadius: BorderRadius.circular(32),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Loyalty Rewards',
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1)),
+                IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close_rounded,
+                        color: AppColors.textHint)),
+              ],
+            ),
+            const Gap(24),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                      color: AppColors.warning.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20)),
+                  child: const Icon(Icons.stars_rounded,
+                      color: AppColors.warning, size: 36),
+                ),
+                const Gap(20),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('$points',
+                        style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textPrimaryLight)),
+                    const Text('Total Points Earned',
+                        style: TextStyle(
+                            color: AppColors.textSecondaryLight,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ],
+            ),
+            const Gap(32),
+            const Text('HOW IT WORKS',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                    color: AppColors.textHint)),
+            const Gap(16),
+            _buildLoyaltyRule(Icons.sports_soccer_rounded, 'Play & Earn',
+                'Get 1 point for every ₹10 spent on confirmed bookings.'),
+            const Gap(16),
+            _buildLoyaltyRule(Icons.confirmation_number_rounded,
+                'Unlock Coupons', 'Redeem points for flat discounts on your next games.'),
+            const Gap(32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                child: const Text('Back to Profile',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16)),
+              ),
+            ),
+            const Gap(10),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoyaltyRule(IconData icon, String title, String desc) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: AppColors.primary),
+        const Gap(12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const Gap(2),
+              Text(desc,
+                  style: const TextStyle(
+                      color: AppColors.textSecondaryLight,
+                      fontSize: 12,
+                      height: 1.4)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
   Widget _buildDivider() {
     return const Padding(
       padding: EdgeInsets.only(left: 60),

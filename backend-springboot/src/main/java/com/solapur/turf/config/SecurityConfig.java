@@ -55,6 +55,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/health").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/api/test/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/payments/webhook").permitAll()
                 // ── API docs / Swagger ────────────────────────────────────
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 // ── Static resources & uploads ────────────────────────────

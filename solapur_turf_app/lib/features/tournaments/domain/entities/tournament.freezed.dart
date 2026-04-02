@@ -27,8 +27,6 @@ mixin _$Tournament {
   TournamentStatus get status => throw _privateConstructorUsedError;
   String get startDate => throw _privateConstructorUsedError;
   String get endDate => throw _privateConstructorUsedError;
-  String? get registrationDeadline => throw _privateConstructorUsedError;
-  String? get turfName => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
 
   /// Create a copy of Tournament
@@ -56,8 +54,6 @@ abstract class $TournamentCopyWith<$Res> {
       TournamentStatus status,
       String startDate,
       String endDate,
-      String? registrationDeadline,
-      String? turfName,
       String? description});
 }
 
@@ -87,8 +83,6 @@ class _$TournamentCopyWithImpl<$Res, $Val extends Tournament>
     Object? status = null,
     Object? startDate = null,
     Object? endDate = null,
-    Object? registrationDeadline = freezed,
-    Object? turfName = freezed,
     Object? description = freezed,
   }) {
     return _then(_value.copyWith(
@@ -136,14 +130,6 @@ class _$TournamentCopyWithImpl<$Res, $Val extends Tournament>
           ? _value.endDate
           : endDate // ignore: cast_nullable_to_non_nullable
               as String,
-      registrationDeadline: freezed == registrationDeadline
-          ? _value.registrationDeadline
-          : registrationDeadline // ignore: cast_nullable_to_non_nullable
-              as String?,
-      turfName: freezed == turfName
-          ? _value.turfName
-          : turfName // ignore: cast_nullable_to_non_nullable
-              as String?,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -172,8 +158,6 @@ abstract class _$$TournamentImplCopyWith<$Res>
       TournamentStatus status,
       String startDate,
       String endDate,
-      String? registrationDeadline,
-      String? turfName,
       String? description});
 }
 
@@ -201,8 +185,6 @@ class __$$TournamentImplCopyWithImpl<$Res>
     Object? status = null,
     Object? startDate = null,
     Object? endDate = null,
-    Object? registrationDeadline = freezed,
-    Object? turfName = freezed,
     Object? description = freezed,
   }) {
     return _then(_$TournamentImpl(
@@ -250,14 +232,6 @@ class __$$TournamentImplCopyWithImpl<$Res>
           ? _value.endDate
           : endDate // ignore: cast_nullable_to_non_nullable
               as String,
-      registrationDeadline: freezed == registrationDeadline
-          ? _value.registrationDeadline
-          : registrationDeadline // ignore: cast_nullable_to_non_nullable
-              as String?,
-      turfName: freezed == turfName
-          ? _value.turfName
-          : turfName // ignore: cast_nullable_to_non_nullable
-              as String?,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -281,8 +255,6 @@ class _$TournamentImpl implements _Tournament {
       required this.status,
       required this.startDate,
       required this.endDate,
-      this.registrationDeadline,
-      this.turfName,
       this.description});
 
   @override
@@ -308,15 +280,11 @@ class _$TournamentImpl implements _Tournament {
   @override
   final String endDate;
   @override
-  final String? registrationDeadline;
-  @override
-  final String? turfName;
-  @override
   final String? description;
 
   @override
   String toString() {
-    return 'Tournament(tournamentId: $tournamentId, name: $name, sportType: $sportType, format: $format, entryFee: $entryFee, prizePool: $prizePool, maxTeams: $maxTeams, registeredTeams: $registeredTeams, status: $status, startDate: $startDate, endDate: $endDate, registrationDeadline: $registrationDeadline, turfName: $turfName, description: $description)';
+    return 'Tournament(tournamentId: $tournamentId, name: $name, sportType: $sportType, format: $format, entryFee: $entryFee, prizePool: $prizePool, maxTeams: $maxTeams, registeredTeams: $registeredTeams, status: $status, startDate: $startDate, endDate: $endDate, description: $description)';
   }
 
   @override
@@ -342,10 +310,6 @@ class _$TournamentImpl implements _Tournament {
             (identical(other.startDate, startDate) ||
                 other.startDate == startDate) &&
             (identical(other.endDate, endDate) || other.endDate == endDate) &&
-            (identical(other.registrationDeadline, registrationDeadline) ||
-                other.registrationDeadline == registrationDeadline) &&
-            (identical(other.turfName, turfName) ||
-                other.turfName == turfName) &&
             (identical(other.description, description) ||
                 other.description == description));
   }
@@ -364,8 +328,6 @@ class _$TournamentImpl implements _Tournament {
       status,
       startDate,
       endDate,
-      registrationDeadline,
-      turfName,
       description);
 
   /// Create a copy of Tournament
@@ -390,8 +352,6 @@ abstract class _Tournament implements Tournament {
       required final TournamentStatus status,
       required final String startDate,
       required final String endDate,
-      final String? registrationDeadline,
-      final String? turfName,
       final String? description}) = _$TournamentImpl;
 
   @override
@@ -417,10 +377,6 @@ abstract class _Tournament implements Tournament {
   @override
   String get endDate;
   @override
-  String? get registrationDeadline;
-  @override
-  String? get turfName;
-  @override
   String? get description;
 
   /// Create a copy of Tournament
@@ -428,5 +384,398 @@ abstract class _Tournament implements Tournament {
   @override
   @JsonKey(includeFromJson: false, includeToJson: false)
   _$$TournamentImplCopyWith<_$TournamentImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+mixin _$TournamentMatch {
+  String get matchId => throw _privateConstructorUsedError;
+  String get tournamentId => throw _privateConstructorUsedError;
+  int get round => throw _privateConstructorUsedError;
+  int get matchNumber => throw _privateConstructorUsedError;
+  String? get teamAId => throw _privateConstructorUsedError;
+  String? get teamBId => throw _privateConstructorUsedError;
+  String? get teamAName => throw _privateConstructorUsedError;
+  String? get teamBName => throw _privateConstructorUsedError;
+  String? get winnerId => throw _privateConstructorUsedError;
+  int? get scoreA => throw _privateConstructorUsedError;
+  int? get scoreB => throw _privateConstructorUsedError;
+  TournamentMatchStatus get status => throw _privateConstructorUsedError;
+  String? get scheduledStartTime => throw _privateConstructorUsedError;
+
+  /// Create a copy of TournamentMatch
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  $TournamentMatchCopyWith<TournamentMatch> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $TournamentMatchCopyWith<$Res> {
+  factory $TournamentMatchCopyWith(
+          TournamentMatch value, $Res Function(TournamentMatch) then) =
+      _$TournamentMatchCopyWithImpl<$Res, TournamentMatch>;
+  @useResult
+  $Res call(
+      {String matchId,
+      String tournamentId,
+      int round,
+      int matchNumber,
+      String? teamAId,
+      String? teamBId,
+      String? teamAName,
+      String? teamBName,
+      String? winnerId,
+      int? scoreA,
+      int? scoreB,
+      TournamentMatchStatus status,
+      String? scheduledStartTime});
+}
+
+/// @nodoc
+class _$TournamentMatchCopyWithImpl<$Res, $Val extends TournamentMatch>
+    implements $TournamentMatchCopyWith<$Res> {
+  _$TournamentMatchCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+
+  /// Create a copy of TournamentMatch
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? matchId = null,
+    Object? tournamentId = null,
+    Object? round = null,
+    Object? matchNumber = null,
+    Object? teamAId = freezed,
+    Object? teamBId = freezed,
+    Object? teamAName = freezed,
+    Object? teamBName = freezed,
+    Object? winnerId = freezed,
+    Object? scoreA = freezed,
+    Object? scoreB = freezed,
+    Object? status = null,
+    Object? scheduledStartTime = freezed,
+  }) {
+    return _then(_value.copyWith(
+      matchId: null == matchId
+          ? _value.matchId
+          : matchId // ignore: cast_nullable_to_non_nullable
+              as String,
+      tournamentId: null == tournamentId
+          ? _value.tournamentId
+          : tournamentId // ignore: cast_nullable_to_non_nullable
+              as String,
+      round: null == round
+          ? _value.round
+          : round // ignore: cast_nullable_to_non_nullable
+              as int,
+      matchNumber: null == matchNumber
+          ? _value.matchNumber
+          : matchNumber // ignore: cast_nullable_to_non_nullable
+              as int,
+      teamAId: freezed == teamAId
+          ? _value.teamAId
+          : teamAId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      teamBId: freezed == teamBId
+          ? _value.teamBId
+          : teamBId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      teamAName: freezed == teamAName
+          ? _value.teamAName
+          : teamAName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      teamBName: freezed == teamBName
+          ? _value.teamBName
+          : teamBName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      winnerId: freezed == winnerId
+          ? _value.winnerId
+          : winnerId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scoreA: freezed == scoreA
+          ? _value.scoreA
+          : scoreA // ignore: cast_nullable_to_non_nullable
+              as int?,
+      scoreB: freezed == scoreB
+          ? _value.scoreB
+          : scoreB // ignore: cast_nullable_to_non_nullable
+              as int?,
+      status: null == status
+          ? _value.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as TournamentMatchStatus,
+      scheduledStartTime: freezed == scheduledStartTime
+          ? _value.scheduledStartTime
+          : scheduledStartTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ) as $Val);
+  }
+}
+
+/// @nodoc
+abstract class _$$TournamentMatchImplCopyWith<$Res>
+    implements $TournamentMatchCopyWith<$Res> {
+  factory _$$TournamentMatchImplCopyWith(_$TournamentMatchImpl value,
+          $Res Function(_$TournamentMatchImpl) then) =
+      __$$TournamentMatchImplCopyWithImpl<$Res>;
+  @override
+  @useResult
+  $Res call(
+      {String matchId,
+      String tournamentId,
+      int round,
+      int matchNumber,
+      String? teamAId,
+      String? teamBId,
+      String? teamAName,
+      String? teamBName,
+      String? winnerId,
+      int? scoreA,
+      int? scoreB,
+      TournamentMatchStatus status,
+      String? scheduledStartTime});
+}
+
+/// @nodoc
+class __$$TournamentMatchImplCopyWithImpl<$Res>
+    extends _$TournamentMatchCopyWithImpl<$Res, _$TournamentMatchImpl>
+    implements _$$TournamentMatchImplCopyWith<$Res> {
+  __$$TournamentMatchImplCopyWithImpl(
+      _$TournamentMatchImpl _value, $Res Function(_$TournamentMatchImpl) _then)
+      : super(_value, _then);
+
+  /// Create a copy of TournamentMatch
+  /// with the given fields replaced by the non-null parameter values.
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? matchId = null,
+    Object? tournamentId = null,
+    Object? round = null,
+    Object? matchNumber = null,
+    Object? teamAId = freezed,
+    Object? teamBId = freezed,
+    Object? teamAName = freezed,
+    Object? teamBName = freezed,
+    Object? winnerId = freezed,
+    Object? scoreA = freezed,
+    Object? scoreB = freezed,
+    Object? status = null,
+    Object? scheduledStartTime = freezed,
+  }) {
+    return _then(_$TournamentMatchImpl(
+      matchId: null == matchId
+          ? _value.matchId
+          : matchId // ignore: cast_nullable_to_non_nullable
+              as String,
+      tournamentId: null == tournamentId
+          ? _value.tournamentId
+          : tournamentId // ignore: cast_nullable_to_non_nullable
+              as String,
+      round: null == round
+          ? _value.round
+          : round // ignore: cast_nullable_to_non_nullable
+              as int,
+      matchNumber: null == matchNumber
+          ? _value.matchNumber
+          : matchNumber // ignore: cast_nullable_to_non_nullable
+              as int,
+      teamAId: freezed == teamAId
+          ? _value.teamAId
+          : teamAId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      teamBId: freezed == teamBId
+          ? _value.teamBId
+          : teamBId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      teamAName: freezed == teamAName
+          ? _value.teamAName
+          : teamAName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      teamBName: freezed == teamBName
+          ? _value.teamBName
+          : teamBName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      winnerId: freezed == winnerId
+          ? _value.winnerId
+          : winnerId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      scoreA: freezed == scoreA
+          ? _value.scoreA
+          : scoreA // ignore: cast_nullable_to_non_nullable
+              as int?,
+      scoreB: freezed == scoreB
+          ? _value.scoreB
+          : scoreB // ignore: cast_nullable_to_non_nullable
+              as int?,
+      status: null == status
+          ? _value.status
+          : status // ignore: cast_nullable_to_non_nullable
+              as TournamentMatchStatus,
+      scheduledStartTime: freezed == scheduledStartTime
+          ? _value.scheduledStartTime
+          : scheduledStartTime // ignore: cast_nullable_to_non_nullable
+              as String?,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$TournamentMatchImpl implements _TournamentMatch {
+  const _$TournamentMatchImpl(
+      {required this.matchId,
+      required this.tournamentId,
+      required this.round,
+      required this.matchNumber,
+      this.teamAId,
+      this.teamBId,
+      this.teamAName,
+      this.teamBName,
+      this.winnerId,
+      this.scoreA,
+      this.scoreB,
+      required this.status,
+      this.scheduledStartTime});
+
+  @override
+  final String matchId;
+  @override
+  final String tournamentId;
+  @override
+  final int round;
+  @override
+  final int matchNumber;
+  @override
+  final String? teamAId;
+  @override
+  final String? teamBId;
+  @override
+  final String? teamAName;
+  @override
+  final String? teamBName;
+  @override
+  final String? winnerId;
+  @override
+  final int? scoreA;
+  @override
+  final int? scoreB;
+  @override
+  final TournamentMatchStatus status;
+  @override
+  final String? scheduledStartTime;
+
+  @override
+  String toString() {
+    return 'TournamentMatch(matchId: $matchId, tournamentId: $tournamentId, round: $round, matchNumber: $matchNumber, teamAId: $teamAId, teamBId: $teamBId, teamAName: $teamAName, teamBName: $teamBName, winnerId: $winnerId, scoreA: $scoreA, scoreB: $scoreB, status: $status, scheduledStartTime: $scheduledStartTime)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$TournamentMatchImpl &&
+            (identical(other.matchId, matchId) || other.matchId == matchId) &&
+            (identical(other.tournamentId, tournamentId) ||
+                other.tournamentId == tournamentId) &&
+            (identical(other.round, round) || other.round == round) &&
+            (identical(other.matchNumber, matchNumber) ||
+                other.matchNumber == matchNumber) &&
+            (identical(other.teamAId, teamAId) || other.teamAId == teamAId) &&
+            (identical(other.teamBId, teamBId) || other.teamBId == teamBId) &&
+            (identical(other.teamAName, teamAName) ||
+                other.teamAName == teamAName) &&
+            (identical(other.teamBName, teamBName) ||
+                other.teamBName == teamBName) &&
+            (identical(other.winnerId, winnerId) ||
+                other.winnerId == winnerId) &&
+            (identical(other.scoreA, scoreA) || other.scoreA == scoreA) &&
+            (identical(other.scoreB, scoreB) || other.scoreB == scoreB) &&
+            (identical(other.status, status) || other.status == status) &&
+            (identical(other.scheduledStartTime, scheduledStartTime) ||
+                other.scheduledStartTime == scheduledStartTime));
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      runtimeType,
+      matchId,
+      tournamentId,
+      round,
+      matchNumber,
+      teamAId,
+      teamBId,
+      teamAName,
+      teamBName,
+      winnerId,
+      scoreA,
+      scoreB,
+      status,
+      scheduledStartTime);
+
+  /// Create a copy of TournamentMatch
+  /// with the given fields replaced by the non-null parameter values.
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$TournamentMatchImplCopyWith<_$TournamentMatchImpl> get copyWith =>
+      __$$TournamentMatchImplCopyWithImpl<_$TournamentMatchImpl>(
+          this, _$identity);
+}
+
+abstract class _TournamentMatch implements TournamentMatch {
+  const factory _TournamentMatch(
+      {required final String matchId,
+      required final String tournamentId,
+      required final int round,
+      required final int matchNumber,
+      final String? teamAId,
+      final String? teamBId,
+      final String? teamAName,
+      final String? teamBName,
+      final String? winnerId,
+      final int? scoreA,
+      final int? scoreB,
+      required final TournamentMatchStatus status,
+      final String? scheduledStartTime}) = _$TournamentMatchImpl;
+
+  @override
+  String get matchId;
+  @override
+  String get tournamentId;
+  @override
+  int get round;
+  @override
+  int get matchNumber;
+  @override
+  String? get teamAId;
+  @override
+  String? get teamBId;
+  @override
+  String? get teamAName;
+  @override
+  String? get teamBName;
+  @override
+  String? get winnerId;
+  @override
+  int? get scoreA;
+  @override
+  int? get scoreB;
+  @override
+  TournamentMatchStatus get status;
+  @override
+  String? get scheduledStartTime;
+
+  /// Create a copy of TournamentMatch
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  _$$TournamentMatchImplCopyWith<_$TournamentMatchImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

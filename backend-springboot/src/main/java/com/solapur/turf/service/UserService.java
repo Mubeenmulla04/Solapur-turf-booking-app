@@ -154,4 +154,11 @@ public class UserService {
         }
         userRepository.deleteById(id);
     }
+
+    public void updateFcmToken(UUID userId, String fcmToken) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
+        user.setFcmToken(fcmToken);
+        userRepository.save(user);
+    }
 }

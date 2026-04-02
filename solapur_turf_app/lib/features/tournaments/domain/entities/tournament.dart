@@ -34,8 +34,27 @@ class Tournament with _$Tournament {
     required TournamentStatus status,
     required String startDate,
     required String endDate,
-    String? registrationDeadline,
-    String? turfName,
     String? description,
   }) = _Tournament;
+}
+
+enum TournamentMatchStatus { upcoming, live, completed, cancelled }
+
+@freezed
+class TournamentMatch with _$TournamentMatch {
+  const factory TournamentMatch({
+    required String matchId,
+    required String tournamentId,
+    required int round,
+    required int matchNumber,
+    String? teamAId,
+    String? teamBId,
+    String? teamAName,
+    String? teamBName,
+    String? winnerId,
+    int? scoreA,
+    int? scoreB,
+    required TournamentMatchStatus status,
+    String? scheduledStartTime,
+  }) = _TournamentMatch;
 }

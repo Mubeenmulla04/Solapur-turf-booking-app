@@ -14,6 +14,8 @@ import '../../../../core/widgets/app_widgets.dart';
 import '../../domain/entities/tournament.dart';
 import '../../../teams/presentation/providers/team_provider.dart';
 import '../../../teams/domain/entities/team.dart';
+import '../widgets/tournament_bracket_view.dart';
+import '../providers/tournament_matches_provider.dart';
 
 // ── Provider ──
 
@@ -25,7 +27,7 @@ final _tournamentDetailProvider =
       final res = await dio.get('/tournaments/$id');
       final j = res.data as Map<String, dynamic>;
       return Tournament(
-        tournamentId: j['tournament_id'] as String? ?? j['tournamentId'] as String? ?? '',
+        tournamentId: (j['tournament_id'] ?? j['tournamentId'] ?? '').toString(),
         name: j['name'] as String? ?? '',
         sportType: j['sport_type'] as String? ?? j['sportType'] as String? ?? '',
         format: j['format'] as String? ?? '',
@@ -54,348 +56,347 @@ class TournamentDetailScreen extends ConsumerWidget {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
     final tAsync = ref.watch(_tournamentDetailProvider(tournamentId));
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      body: tAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-        error: (e, _) => Scaffold(
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            iconTheme: const IconThemeData(color: AppColors.textPrimaryLight),
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundLight,
+        body: tAsync.when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
           ),
-          body: AppErrorWidget(
-            message: e is Failure ? e.userMessage : e.toString(),
-            onRetry: () => ref.invalidate(_tournamentDetailProvider(tournamentId)),
+          error: (e, _) => Scaffold(
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              iconTheme: const IconThemeData(color: AppColors.textPrimaryLight),
+            ),
+            body: AppErrorWidget(
+              message: e is Failure ? e.userMessage : e.toString(),
+              onRetry: () => ref.invalidate(_tournamentDetailProvider(tournamentId)),
+            ),
           ),
-        ),
-        data: (t) {
-          final isUpcoming = t.status == TournamentStatus.upcoming;
-          final spotsLeft = t.maxTeams - t.registeredTeams;
+          data: (t) {
+            final isUpcoming = t.status == TournamentStatus.upcoming;
+            final spotsLeft = t.maxTeams - t.registeredTeams;
 
-          return Stack(
-            children: [
-              CustomScrollView(
-                slivers: [
-                  // ── Hero Banner ──
-                  SliverAppBar(
-                    expandedHeight: 280,
-                    pinned: true,
-                    backgroundColor: AppColors.surfaceLight,
-                    elevation: 0,
-                    iconTheme: const IconThemeData(color: AppColors.textPrimaryDark),
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.primaryDark,
-                              AppColors.primary.withOpacity(0.8),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+            return Stack(
+              children: [
+                NestedScrollView(
+                  headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                    // ── Hero Banner (Collapsible) ──
+                    SliverAppBar(
+                      expandedHeight: 320,
+                      pinned: true,
+                      elevation: 0,
+                      backgroundColor: AppColors.primaryDark,
+                      iconTheme: const IconThemeData(color: Colors.white),
+                      flexibleSpace: FlexibleSpaceBar(
+                        background: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.primaryDark,
+                                AppColors.primary.withOpacity(0.8),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                           ),
-                        ),
-                        child: Stack(
-                          children: [
-                            Positioned(
-                              right: -40,
-                              top: 40,
-                              child: Icon(Icons.emoji_events, size: 240, color: Colors.white.withOpacity(0.05)),
-                            ),
-                            Positioned(
-                              left: 24,
-                              bottom: 40,
-                              right: 24,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      t.status.label.toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.primaryDark,
-                                        letterSpacing: 1,
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                right: -40,
+                                top: 40,
+                                child: Icon(Icons.emoji_events, size: 240, color: Colors.white.withOpacity(0.05)),
+                              ),
+                              Positioned(
+                                left: 24,
+                                bottom: 100,
+                                right: 24,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                    ),
-                                  ),
-                                  const Gap(12),
-                                  Text(
-                                    t.name,
-                                    style: const TextStyle(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: -0.5,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Gradient fade at bottom
-                            Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              height: 40,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.topCenter,
-                                    colors: [
-                                      AppColors.backgroundLight,
-                                      AppColors.backgroundLight.withOpacity(0),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                    actions: [
-                      IconButton(
-                        icon: const Icon(Icons.share_outlined, color: Colors.white),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-
-                  // ── Detail Blocks ──
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Gap(8),
-
-                          // Prize Pool Block (Highlight)
-                          if (t.prizePool != null && t.prizePool! > 0)
-                            Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    AppColors.warning.withOpacity(0.15),
-                                    AppColors.warning.withOpacity(0.05),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: AppColors.warning.withOpacity(0.5)),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.warning.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.warning.withOpacity(0.2),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.military_tech, color: AppColors.warning, size: 32),
-                                  ),
-                                  const Gap(20),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Grand Prize Pool',
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.textPrimaryLight),
-                                      ),
-                                      Text(
-                                        AppFormatters.formatCurrency(t.prizePool!),
+                                      child: Text(
+                                        t.status.label.toUpperCase(),
                                         style: const TextStyle(
-                                          fontSize: 24,
+                                          fontSize: 10,
                                           fontWeight: FontWeight.bold,
-                                          color: AppColors.warning,
-                                          letterSpacing: -0.5,
+                                          color: AppColors.primaryDark,
+                                          letterSpacing: 1,
                                         ),
                                       ),
-                                    ],
-                                  )
-                                ],
-                              ),
-                            ),
-
-                          if (t.prizePool != null && t.prizePool! > 0) const Gap(24),
-
-                          // Rules / Stats Box
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceLight,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: AppColors.dividerLight),
-                            ),
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(child: _StatWidget(icon: Icons.sports, label: 'Sport', value: AppFormatters.toTitleCase(t.sportType))),
-                                    Container(width: 1, height: 40, color: AppColors.dividerLight),
-                                    Expanded(child: _StatWidget(icon: Icons.hub, label: 'Format', value: AppFormatters.toTitleCase(t.format))),
-                                  ],
-                                ),
-                                const Gap(16),
-                                const Divider(color: AppColors.dividerLight, height: 1),
-                                const Gap(16),
-                                Row(
-                                  children: [
-                                    Expanded(child: _StatWidget(icon: Icons.calendar_today, label: 'Timeline', value: '${_formatDateStr(t.startDate)} - ${_formatDateStr(t.endDate)}')),
-                                    Container(width: 1, height: 40, color: AppColors.dividerLight),
-                                    Expanded(child: _StatWidget(icon: Icons.groups_2, label: 'Slots', value: isUpcoming ? '$spotsLeft left' : 'Full')),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const Gap(24),
-
-                          // Venue
-                          const Text('Venue', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight)),
-                          const Gap(12),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceLight,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.dividerLight),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(color: AppColors.primaryContainer, borderRadius: BorderRadius.circular(12)),
-                                  child: const Icon(Icons.location_on, color: AppColors.primary),
-                                ),
-                                const Gap(16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        t.turfName ?? 'Multiple Associated Venues',
-                                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight),
+                                    ),
+                                    const Gap(12),
+                                    Text(
+                                      t.name,
+                                      style: const TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: -0.5,
+                                        color: Colors.white,
                                       ),
-                                      const Gap(4),
-                                      const Text('Tap to view map', style: TextStyle(fontSize: 12, color: AppColors.primary, decoration: TextDecoration.underline)),
-                                    ],
-                                  ),
-                                )
-                              ],
-                            ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-
-                          const Gap(32),
-
-                          // About
-                          if (t.description?.isNotEmpty == true) ...[
-                            const Text('Rules & Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight)),
-                            const Gap(12),
-                            Text(
-                              t.description!,
-                              style: const TextStyle(fontSize: 15, color: AppColors.textSecondaryLight, height: 1.6),
-                            ),
-                          ],
-
-                          const Gap(120), // Padding for Sticky Bar
+                        ),
+                      ),
+                      bottom: TabBar(
+                        indicatorColor: Colors.white,
+                        indicatorWeight: 3,
+                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),
+                        labelColor: Colors.white,
+                        unselectedLabelColor: Colors.white.withOpacity(0.6),
+                        tabs: const [
+                          Tab(text: 'INFO'),
+                          Tab(text: 'BRACKET'),
+                          Tab(text: 'TEAMS'),
                         ],
                       ),
                     ),
-                  )
-                ],
-              ),
-
-              // ── Sticky Join Bottom Bar ──
-              if (isUpcoming)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceLight.withOpacity(0.85),
-                          border: const Border(top: BorderSide(color: AppColors.dividerLight, width: 0.5)),
+                  ],
+                  body: TabBarView(
+                    children: [
+                      // 1. INFO TAB
+                      _buildInfoTab(t, isUpcoming, spotsLeft),
+                      
+                      // 2. BRACKET TAB
+                      ref.watch(tournamentMatchesProvider(tournamentId)).when(
+                        loading: () => const Center(child: CircularProgressIndicator()),
+                        error: (e, __) => Center(child: Text('Error loading bracket: $e')),
+                        data: (matches) => TournamentBracketView(
+                          matches: matches,
+                          onRefresh: () async => ref.invalidate(tournamentMatchesProvider(tournamentId)),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text(
-                                  'Team Entry Fee',
-                                  style: TextStyle(fontSize: 12, color: AppColors.textSecondaryLight, fontWeight: FontWeight.w500),
-                                ),
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                                  textBaseline: TextBaseline.alphabetic,
-                                  children: [
-                                    Text(
-                                      t.entryFee == 0 ? 'FREE' : AppFormatters.formatCurrency(t.entryFee),
-                                      style: TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
-                                        color: t.entryFee == 0 ? AppColors.success : AppColors.textPrimaryLight,
+                      ),
+
+                      // 3. TEAMS TAB (Placeholder list)
+                      const Center(child: Text('Registered teams list coming soon')),
+                    ],
+                  ),
+                ),
+
+                // ── Sticky Join Bottom Bar ──
+                if (isUpcoming)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceLight.withOpacity(0.85),
+                            border: const Border(top: BorderSide(color: AppColors.dividerLight, width: 0.5)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'Team Entry Fee',
+                                    style: TextStyle(fontSize: 12, color: AppColors.textSecondaryLight, fontWeight: FontWeight.w500),
+                                  ),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                                    textBaseline: TextBaseline.alphabetic,
+                                    children: [
+                                      Text(
+                                        t.entryFee == 0 ? 'FREE' : AppFormatters.formatCurrency(t.entryFee),
+                                        style: TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          color: t.entryFee == 0 ? AppColors.success : AppColors.textPrimaryLight,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                HapticFeedback.mediumImpact();
-                                _showTeamPicker(context, ref, t);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                                backgroundColor: AppColors.primary,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+                                    ],
+                                  ),
+                                ],
                               ),
-                              child: const Text('Enter Team', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                            ),
-                          ],
+                              ElevatedButton(
+                                onPressed: () {
+                                  HapticFeedback.mediumImpact();
+                                  _showTeamPicker(context, ref, t);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                                  backgroundColor: AppColors.primary,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))
+                                ),
+                                child: const Text('Enter Team', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoTab(Tournament t, bool isUpcoming, int spotsLeft) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Prize Pool Block (Highlight)
+          if (t.prizePool != null && t.prizePool! > 0)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.warning.withOpacity(0.15),
+                    AppColors.warning.withOpacity(0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-            ],
-          );
-        },
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.warning.withOpacity(0.5)),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.warning.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.military_tech, color: AppColors.warning, size: 32),
+                  ),
+                  const Gap(20),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Grand Prize Pool',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textPrimaryLight),
+                      ),
+                      Text(
+                        AppFormatters.formatCurrency(t.prizePool!),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.warning,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          
+          if (t.prizePool != null && t.prizePool! > 0) const Gap(24),
+
+          // Rules / Stats Box
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.dividerLight),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: _StatWidget(icon: Icons.sports, label: 'Sport', value: AppFormatters.toTitleCase(t.sportType))),
+                    Container(width: 1, height: 40, color: AppColors.dividerLight),
+                    Expanded(child: _StatWidget(icon: Icons.hub, label: 'Format', value: AppFormatters.toTitleCase(t.format))),
+                  ],
+                ),
+                const Gap(16),
+                const Divider(color: AppColors.dividerLight, height: 1),
+                const Gap(16),
+                Row(
+                  children: [
+                    Expanded(child: _StatWidget(icon: Icons.calendar_today, label: 'Timeline', value: '${_formatDateStr(t.startDate)} - ${_formatDateStr(t.endDate)}')),
+                    Container(width: 1, height: 40, color: AppColors.dividerLight),
+                    Expanded(child: _StatWidget(icon: Icons.groups_2, label: 'Slots', value: isUpcoming ? '$spotsLeft left' : 'Full')),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const Gap(24),
+          const Text('Venue', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight)),
+          const Gap(12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.dividerLight),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: AppColors.primaryContainer, borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.location_on, color: AppColors.primary),
+                ),
+                const Gap(16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t.turfName ?? 'Multiple Associated Venues',
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight),
+                      ),
+                      const Gap(4),
+                      const Text('Tap to view map', style: TextStyle(fontSize: 12, color: AppColors.primary, decoration: TextDecoration.underline)),
+                    ],
+                  ),
+                )
+              ],
+            ),
+          ),
+
+          const Gap(32),
+          if (t.description?.isNotEmpty == true) ...[
+            const Text('Rules & Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight)),
+            const Gap(12),
+            Text(
+              t.description!,
+              style: const TextStyle(fontSize: 15, color: AppColors.textSecondaryLight, height: 1.6),
+            ),
+          ],
+          const Gap(120),
+        ],
       ),
     );
   }

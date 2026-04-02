@@ -137,11 +137,12 @@ public class BookingService {
             throw new BookingAlreadyExistsException("Slot overlaps an existing booking (end conflict).");
         }
 
-        // ── Price calculation ──────────────────────────────────────────────────
+        // ── Price calculation with Dynamic Pricing Rules ─────────────────────
         long durationMinutes = ChronoUnit.MINUTES.between(request.getStartTime(), request.getEndTime());
         BigDecimal durationHours = BigDecimal.valueOf(durationMinutes)
                 .divide(BigDecimal.valueOf(60), 2, java.math.RoundingMode.HALF_UP);
-        BigDecimal finalAmount = turf.getHourlyRate().multiply(durationHours);
+        BigDecimal finalAmount = calculateBookingPrice(turf, request.getBookingDate(), 
+                                                       request.getStartTime(), request.getEndTime());
 
         // ── Build booking ──────────────────────────────────────────────────────
         Booking booking = Booking.builder()
@@ -259,6 +260,15 @@ public class BookingService {
         if (booking.getPaymentStatus() == PaymentStatus.PENDING) {
             booking.setPaymentStatus(PaymentStatus.PAID);
         }
+
+        // Award loyalty points: ₹10 = 1 point
+        User user = booking.getUser();
+        int pointsToAward = booking.getFinalAmount().divide(BigDecimal.valueOf(10), 0, java.math.RoundingMode.DOWN).intValue();
+        if (pointsToAward > 0) {
+            user.setLoyaltyPoints((user.getLoyaltyPoints() != null ? user.getLoyaltyPoints() : 0) + pointsToAward);
+            userRepository.save(user);
+        }
+
         return mapToDto(bookingRepository.save(booking));
     }
 

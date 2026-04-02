@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -5,12 +6,31 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'router/app_router.dart';
+import 'core/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env');
+  
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp();
+    }
+  } catch (e) {
+    debugPrint('Firebase Core initialization skipped: $e');
+  }
+
   await initializeDateFormatting('en_IN', null);
-  runApp(const ProviderScope(child: SolapurTurfApp()));
+  final container = ProviderScope(child: const SolapurTurfApp());
+  
+  // Initialize notification service early
+  try {
+    await container.read(notificationServiceProvider).initialize();
+  } catch (e) {
+     debugPrint('Notification Service initialization failed: $e');
+  }
+
+  runApp(container);
 }
 
 class SolapurTurfApp extends ConsumerWidget {

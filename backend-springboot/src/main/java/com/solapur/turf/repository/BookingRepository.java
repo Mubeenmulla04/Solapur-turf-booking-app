@@ -55,4 +55,6 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
     // ── Settlement-specific queries ───────────────────────────────────────────
     List<Booking> findByTurfOwnerIdAndBookingDateBetweenAndBookingStatus(
             UUID ownerId, LocalDate startDate, LocalDate endDate, BookingStatus status);
+
+    boolean existsByUserIdAndTurfIdAndBookingStatus(UUID userId, UUID turfId, BookingStatus status);
 }

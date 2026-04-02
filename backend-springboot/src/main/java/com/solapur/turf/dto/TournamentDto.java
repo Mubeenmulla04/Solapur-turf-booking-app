@@ -24,6 +24,7 @@ public class TournamentDto {
     private int maxTeams;
     private BigDecimal entryFeePerTeam;
     private BigDecimal prizePoolWinner;
+    private BigDecimal prizePoolRunnerUp;
     private LocalDate startDate;
     private LocalDate endDate;
     private LocalDateTime registrationDeadline;

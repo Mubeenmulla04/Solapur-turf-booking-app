@@ -30,6 +30,25 @@ public class TestSeederController {
     private final AvailabilitySlotRepository availabilitySlotRepository;
     private final UserWalletRepository userWalletRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.solapur.turf.service.NotificationService notificationService;
+
+    @PostMapping("/test-push")
+    public ResponseEntity<ApiResponse<String>> testPush(@org.springframework.web.bind.annotation.RequestParam UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        
+        if (user.getFcmToken() == null || user.getFcmToken().isEmpty()) {
+             return ResponseEntity.badRequest().body(ApiResponse.error("User has no FCM token registered. Please login on the mobile app first."));
+        }
+
+        notificationService.sendPushNotification(
+            user.getFcmToken(), 
+            "Solapur Turf Active! 🎉", 
+            "Congratulations! Your device is now connected to our notification system."
+        );
+        
+        return ResponseEntity.ok(ApiResponse.success("Notification sent to: " + user.getFullName(), "Sent"));
+    }
 
     @PostMapping("/seed-test-data")
     @Transactional

@@ -54,6 +54,10 @@ class AuthNotifier extends _$AuthNotifier {
       final storage = ref.read(tokenStorageProvider);
       final role = await storage.getUserRole() ?? 'USER';
       final userId = await storage.getAccessToken() ?? '';
+      
+      // Update FCM token in background
+      ref.read(notificationServiceProvider).updateFcmToken();
+
       // We read cached meta — full user object
       return AuthState.authenticated(
         user: User(

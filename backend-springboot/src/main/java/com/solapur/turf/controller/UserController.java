@@ -102,4 +102,12 @@ public class UserController {
                 body.get("currentPassword"), body.get("newPassword"));
         return ResponseEntity.ok(ApiResponse.success("OK", "Password changed successfully"));
     }
+
+    @PatchMapping("/me/fcm-token")
+    public ResponseEntity<ApiResponse<Object>> updateFcmToken(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody Map<String, String> body) {
+        userService.updateFcmToken(userDetails.getUser().getId(), body.get("fcmToken"));
+        return ResponseEntity.ok(ApiResponse.success(null, "FCM token updated successfully"));
+    }
 }

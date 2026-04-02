@@ -55,4 +55,11 @@ public class PaymentController {
         boolean success = paymentService.processRefundByBookingId(bookingId, request.getAmount(), request.getReason());
         return ResponseEntity.ok(Collections.singletonMap("success", success));
     }
+    @PostMapping("/webhook")
+    public ResponseEntity<String> handleWebhook(
+            @RequestBody String payload,
+            @RequestHeader("X-Razorpay-Signature") String signature) {
+        paymentService.handleWebhook(payload, signature);
+        return ResponseEntity.ok("Received");
+    }
 }

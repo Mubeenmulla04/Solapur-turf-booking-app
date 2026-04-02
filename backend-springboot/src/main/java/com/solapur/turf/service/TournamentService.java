@@ -8,14 +8,19 @@ import com.solapur.turf.entity.TournamentRegistration;
 import com.solapur.turf.enums.RegistrationStatus;
 import com.solapur.turf.enums.TournamentStatus;
 import com.solapur.turf.exception.ApiException;
+import com.solapur.turf.entity.TournamentMatch;
 import com.solapur.turf.repository.TeamRepository;
 import com.solapur.turf.repository.TournamentRegistrationRepository;
 import com.solapur.turf.repository.TournamentRepository;
+import com.solapur.turf.repository.TournamentMatchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,6 +32,7 @@ public class TournamentService {
     private final TournamentRepository tournamentRepository;
     private final TournamentRegistrationRepository registrationRepository;
     private final TeamRepository teamRepository;
+    private final TournamentMatchRepository matchRepository;
 
     public List<TournamentDto> getActiveTournaments() {
         return tournamentRepository.findByTournamentStatusNot(TournamentStatus.CANCELLED)
@@ -50,12 +56,16 @@ public class TournamentService {
 
     public List<TournamentDto> getTournamentsBySport(String sport) {
         try {
-            com.solapur.turf.enums.SportType sportType = com.solapur.turf.enums.SportType.valueOf(sport);
+            com.solapur.turf.enums.SportType sportType = com.solapur.turf.enums.SportType.valueOf(sport.toUpperCase());
             return tournamentRepository.findBySportType(sportType)
                     .stream().map(this::mapToDto).collect(Collectors.toList());
         } catch (IllegalArgumentException e) {
             throw new ApiException("Invalid sport type: " + sport, HttpStatus.BAD_REQUEST);
         }
+    }
+
+    public List<TournamentMatch> getMatches(UUID tournamentId) {
+        return matchRepository.findByTournamentIdOrderByRoundAscMatchNumberAsc(tournamentId);
     }
 
     public TournamentDto getTournamentById(UUID id) {
@@ -70,18 +80,14 @@ public class TournamentService {
                 .description(dto.getDescription())
                 .creatorType("ADMIN")
                 .creatorId(UUID.fromString("11111111-1111-1111-1111-111111111111"))
-                .sportType(
-                        dto.getSportType() != null ? dto.getSportType() : com.solapur.turf.enums.SportType.BOX_CRICKET)
-                .format(dto.getFormat() != null ? dto.getFormat() : com.solapur.turf.enums.TournamentFormat.KNOCKOUT)
-                .maxTeams(dto.getMaxTeams() > 0 ? dto.getMaxTeams() : 16)
-                .entryFeePerTeam(
-                        dto.getEntryFeePerTeam() != null ? dto.getEntryFeePerTeam() : java.math.BigDecimal.ZERO)
-                .prizePoolWinner(
-                        dto.getPrizePoolWinner() != null ? dto.getPrizePoolWinner() : java.math.BigDecimal.ZERO)
-                .startDate(dto.getStartDate() != null ? dto.getStartDate() : java.time.LocalDate.now().plusDays(7))
-                .endDate(dto.getEndDate() != null ? dto.getEndDate() : java.time.LocalDate.now().plusDays(10))
-                .registrationDeadline(dto.getRegistrationDeadline() != null ? dto.getRegistrationDeadline()
-                        : java.time.LocalDateTime.now().plusDays(5))
+                .sportType(dto.getSportType())
+                .format(dto.getFormat())
+                .maxTeams(dto.getMaxTeams())
+                .entryFeePerTeam(dto.getEntryFeePerTeam())
+                .prizePoolWinner(dto.getPrizePoolWinner())
+                .startDate(dto.getStartDate())
+                .endDate(dto.getEndDate())
+                .registrationDeadline(dto.getRegistrationDeadline())
                 .registrationStatus(RegistrationStatus.OPEN)
                 .tournamentStatus(TournamentStatus.UPCOMING)
                 .build();
@@ -91,7 +97,6 @@ public class TournamentService {
     }
 
     public void registerTeam(UUID userId, TournamentRegistrationRequest request) {
-        // Validate tournament exists and registration is open
         Tournament tournament = tournamentRepository.findById(request.getTournamentId())
                 .orElseThrow(() -> new ApiException("Tournament not found", HttpStatus.NOT_FOUND));
 
@@ -99,67 +104,123 @@ public class TournamentService {
             throw new ApiException("Tournament registration is not open", HttpStatus.BAD_REQUEST);
         }
 
-        if (tournament.getRegistrationDeadline().isBefore(LocalDateTime.now())) {
-            throw new ApiException("Registration deadline has passed", HttpStatus.BAD_REQUEST);
-        }
-
-        // Check if team exists
         Team team = teamRepository.findById(request.getTeamId())
                 .orElseThrow(() -> new ApiException("Team not found", HttpStatus.NOT_FOUND));
 
-        // Verify user is captain of the team (security check)
         if (!team.getCaptain().getId().equals(userId)) {
-            throw new ApiException("Only team captains can register for tournaments", HttpStatus.FORBIDDEN);
+            throw new ApiException("Only team captains can register", HttpStatus.FORBIDDEN);
         }
 
-        // Check if team is already registered
-        boolean exists = registrationRepository.existsByTournamentIdAndTeamId(
-                request.getTournamentId(), request.getTeamId());
-        if (exists) {
-            throw new ApiException("Team is already registered for this tournament", HttpStatus.CONFLICT);
-        }
-
-        // Check if tournament has reached max teams
-        long currentRegistrations = registrationRepository.countByTournamentId(request.getTournamentId());
-        if (currentRegistrations >= tournament.getMaxTeams()) {
-            throw new ApiException("Tournament has reached maximum team capacity", HttpStatus.BAD_REQUEST);
-        }
-
-        // Create registration
         TournamentRegistration registration = TournamentRegistration.builder()
                 .tournament(tournament)
                 .team(team)
-                .status(RegistrationStatus.REGISTERED.name())
+                .status("REGISTERED")
                 .registrationDate(LocalDateTime.now())
                 .build();
 
         registrationRepository.save(registration);
 
-        // Check if tournament is now full and update status
-        long totalRegistrations = registrationRepository.countByTournamentId(request.getTournamentId());
-        if (totalRegistrations >= tournament.getMaxTeams()) {
+        long count = registrationRepository.countByTournamentId(tournament.getId());
+        if (count >= tournament.getMaxTeams()) {
             tournament.setRegistrationStatus(RegistrationStatus.CLOSED);
             tournamentRepository.save(tournament);
         }
     }
 
-    private TournamentDto mapToDto(Tournament tournament) {
+    @Transactional
+    public List<TournamentMatch> generateKnockoutBracket(UUID tournamentId) {
+        Tournament tournament = tournamentRepository.findById(tournamentId)
+                .orElseThrow(() -> new ApiException("Tournament not found", HttpStatus.NOT_FOUND));
+
+        List<TournamentRegistration> registrations = registrationRepository.findByTournamentId(tournamentId);
+        List<Team> teams = registrations.stream().map(TournamentRegistration::getTeam).collect(Collectors.toList());
+        Collections.shuffle(teams);
+
+        int numTeams = teams.size();
+        int rounds = (int) Math.ceil(Math.log(numTeams) / Math.log(2));
+        int totalSlots = (int) Math.pow(2, rounds);
+
+        List<TournamentMatch> r1Matches = new ArrayList<>();
+        int numByes = totalSlots - numTeams;
+        int numPlaying = numTeams - numByes;
+
+        for (int i = 0; i < numPlaying; i += 2) {
+            r1Matches.add(TournamentMatch.builder()
+                    .tournament(tournament)
+                    .round(1)
+                    .matchNumber((i / 2) + 1)
+                    .teamA(teams.get(i))
+                    .teamB(teams.get(i + 1))
+                    .status("UPCOMING")
+                    .build());
+        }
+        
+        matchRepository.saveAll(r1Matches);
+        tournament.setTournamentStatus(TournamentStatus.ONGOING);
+        tournamentRepository.save(tournament);
+        return r1Matches;
+    }
+
+    @Transactional
+    public TournamentMatch updateMatchResult(UUID tournamentId, UUID matchId, Integer scoreA, Integer scoreB) {
+        TournamentMatch match = matchRepository.findById(matchId)
+                .orElseThrow(() -> new ApiException("Match not found", HttpStatus.NOT_FOUND));
+
+        match.setScoreA(scoreA);
+        match.setScoreB(scoreB);
+        match.setStatus("COMPLETED");
+
+        Team winner = scoreA > scoreB ? match.getTeamA() : match.getTeamB();
+        match.setWinner(winner);
+
+        TournamentMatch updated = matchRepository.save(match);
+        promoteWinner(match, winner);
+        return updated;
+    }
+
+    private void promoteWinner(TournamentMatch completedMatch, Team winner) {
+        int currentRound = completedMatch.getRound();
+        int currentNum = completedMatch.getMatchNumber();
+        int nextRound = currentRound + 1;
+        int nextMatchNum = (currentNum + 1) / 2;
+
+        TournamentMatch nextMatch = matchRepository.findByTournamentIdOrderByRoundAscMatchNumberAsc(completedMatch.getTournament().getId())
+                .stream()
+                .filter(m -> m.getRound() == nextRound && m.getMatchNumber() == nextMatchNum)
+                .findFirst()
+                .orElseGet(() -> TournamentMatch.builder()
+                        .tournament(completedMatch.getTournament())
+                        .round(nextRound)
+                        .matchNumber(nextMatchNum)
+                        .status("UPCOMING")
+                        .build());
+
+        if (currentNum % 2 != 0) {
+            nextMatch.setTeamA(winner);
+        } else {
+            nextMatch.setTeamB(winner);
+        }
+
+        matchRepository.save(nextMatch);
+    }
+
+    private TournamentDto mapToDto(Tournament t) {
         return TournamentDto.builder()
-                .id(tournament.getId())
-                .name(tournament.getName())
-                .description(tournament.getDescription())
-                .turfId(tournament.getTurf() != null ? tournament.getTurf().getId() : null)
-                .sportType(tournament.getSportType())
-                .format(tournament.getFormat())
-                .maxTeams(tournament.getMaxTeams())
-                .entryFeePerTeam(tournament.getEntryFeePerTeam())
-                .prizePoolWinner(tournament.getPrizePoolWinner())
-                .startDate(tournament.getStartDate())
-                .endDate(tournament.getEndDate())
-                .registrationDeadline(tournament.getRegistrationDeadline())
-                .registrationStatus(tournament.getRegistrationStatus())
-                .tournamentStatus(tournament.getTournamentStatus())
-                .bannerUrl(tournament.getBannerUrl())
+                .id(t.getId())
+                .name(t.getName())
+                .description(t.getDescription())
+                .sportType(t.getSportType())
+                .format(t.getFormat())
+                .maxTeams(t.getMaxTeams())
+                .entryFeePerTeam(t.getEntryFeePerTeam())
+                .prizePoolWinner(t.getPrizePoolWinner())
+                .prizePoolRunnerUp(t.getPrizePoolRunnerUp())
+                .startDate(t.getStartDate())
+                .endDate(t.getEndDate())
+                .registrationDeadline(t.getRegistrationDeadline())
+                .registrationStatus(t.getRegistrationStatus())
+                .tournamentStatus(t.getTournamentStatus())
+                .bannerUrl(t.getBannerUrl())
                 .build();
     }
 }

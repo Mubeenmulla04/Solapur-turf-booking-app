@@ -35,9 +35,102 @@ public class PaymentService {
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final WalletService walletService;
+    private final NotificationService notificationService;
 
     @Value("${razorpay.key.secret}")
     private String keySecret;
+
+    @Value("${razorpay.webhook.secret:}")
+    private String webhookSecret;
+
+    public void handleWebhook(String payload, String signature) {
+        try {
+            // Verify signature
+            if (webhookSecret != null && !webhookSecret.isEmpty()) {
+                boolean isValid = Utils.verifyWebhookSignature(payload, signature, webhookSecret);
+                if (!isValid) {
+                    log.error("Invalid webhook signature received from Razorpay");
+                    throw new ApiException("Invalid webhook signature", HttpStatus.BAD_REQUEST);
+                }
+            }
+
+            JSONObject event = new JSONObject(payload);
+            String eventName = event.getString("event");
+            JSONObject paymentEntity = event.getJSONObject("payload")
+                    .getJSONObject("payment")
+                    .getJSONObject("entity");
+
+            String orderId = paymentEntity.optString("order_id");
+            String paymentId = paymentEntity.optString("id");
+
+            log.info("Processing Razorpay webhook event: {} for order: {}", eventName, orderId);
+
+            if (orderId == null || orderId.isEmpty()) return;
+
+            Transaction transaction = transactionRepository.findByGatewayOrderId(orderId).orElse(null);
+            if (transaction == null) {
+                log.warn("Transaction not found for orderId: {}", orderId);
+                return;
+            }
+
+            if ("payment.captured".equals(eventName)) {
+                if (transaction.getStatus() != TransactionStatus.SUCCESS) {
+                    processSuccessfulPayment(transaction, paymentId, signature);
+                }
+            } else if ("payment.failed".equals(eventName)) {
+                if (transaction.getStatus() == TransactionStatus.PENDING) {
+                    processFailedPayment(transaction, paymentId, paymentEntity.optString("error_description"));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error processing Razorpay webhook: {}", e.getMessage());
+        }
+    }
+
+    private void processSuccessfulPayment(Transaction transaction, String paymentId, String signature) {
+        transaction.setGatewayPaymentId(paymentId);
+        transaction.setGatewaySignature(signature);
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        transactionRepository.save(transaction);
+
+        if (transaction.getTransactionType() == TransactionType.WALLET_TOPUP) {
+            TopUpRequest topUpRequest = new TopUpRequest();
+            topUpRequest.setAmount(transaction.getAmount());
+            topUpRequest.setTransactionReference(paymentId);
+            walletService.addFunds(transaction.getUser().getId(), topUpRequest);
+            
+            notificationService.sendPushNotification(transaction.getUser().getFcmToken(), 
+                "Wallet Recharged 💰", "₹" + transaction.getAmount() + " added to your wallet.");
+        } else if (transaction.getTransactionType() == TransactionType.BOOKING_PAYMENT && transaction.getBooking() != null) {
+            Booking booking = transaction.getBooking();
+            booking.setPaymentStatus(PaymentStatus.PAID);
+            booking.setBookingStatus(BookingStatus.CONFIRMED);
+            bookingRepository.save(booking);
+
+            notificationService.sendPushNotification(transaction.getUser().getFcmToken(), 
+                "Slot Confirmed! 🏟️", "Your booking at " + booking.getTurf().getName() + " is confirmed.");
+        }
+        log.info("Successfully processed payment via webhook for order: {}", transaction.getGatewayOrderId());
+    }
+
+    private void processFailedPayment(Transaction transaction, String paymentId, String error) {
+        transaction.setStatus(TransactionStatus.FAILED);
+        transaction.setGatewayPaymentId(paymentId);
+        transaction.setError(error);
+        transactionRepository.save(transaction);
+
+        if (transaction.getTransactionType() == TransactionType.BOOKING_PAYMENT && transaction.getBooking() != null) {
+            Booking booking = transaction.getBooking();
+            booking.setPaymentStatus(PaymentStatus.FAILED);
+            booking.setBookingStatus(BookingStatus.CANCELLED);
+            booking.setCancellationReason("Payment failed: " + error);
+            bookingRepository.save(booking);
+
+            notificationService.sendPushNotification(transaction.getUser().getFcmToken(), 
+                "Payment Failed ⚠️", "Your payment for " + booking.getTurf().getName() + " failed.");
+        }
+        log.info("Marked payment as FAILED via webhook for order: {}", transaction.getGatewayOrderId());
+    }
 
     public PaymentOrderResponse createOrder(PaymentOrderRequest request, UUID userId) {
         try {

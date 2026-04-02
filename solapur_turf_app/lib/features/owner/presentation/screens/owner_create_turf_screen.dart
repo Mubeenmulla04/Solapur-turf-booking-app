@@ -64,11 +64,26 @@ class _OwnerCreateTurfScreenState extends ConsumerState<OwnerCreateTurfScreen> {
     _pitchSizeCtrl.text = turf.size ?? '';
     _hourlyRateCtrl.text = turf.hourlyRate.toString();
     _peakHourlyRateCtrl.text = turf.peakHourRate?.toString() ?? '';
-    _sport = turf.sportType.name.toUpperCase();
-    _surface = turf.surfaceType.name.toUpperCase();
-    _isIndoor = turf.size?.toLowerCase().contains('indoor') ?? false;
+    String mapSport(SportType s) {
+      return s.name.toUpperCase().replaceAll('CRICKET', 'BOX_CRICKET').replaceAll('BOX_BOX_CRICKET', 'BOX_CRICKET');
+    }
+    String mapSurface(SurfaceType s) {
+      if (s == SurfaceType.artificialGrass) return 'ARTIFICIAL_GRASS';
+      if (s == SurfaceType.naturalGrass) return 'NATURAL_GRASS';
+      if (s == SurfaceType.syntheticHardCourt) return 'SYNTHETIC_HARD_COURT';
+      return s.name.toUpperCase();
+    }
 
-    if (turf.createdAt != null) {}
+    final mappedSport = mapSport(turf.sportType);
+    final mappedSurface = mapSurface(turf.surfaceType);
+    
+    // Ensure values exist in dropdown lists
+    const validSports = ['FOOTBALL', 'BOX_CRICKET', 'BASKETBALL', 'VOLLEYBALL', 'TENNIS', 'BADMINTON', 'MULTI_SPORT'];
+    const validSurfaces = ['ARTIFICIAL_GRASS', 'NATURAL_GRASS', 'CONCRETE', 'WOODEN', 'SYNTHETIC_HARD_COURT', 'CLAY'];
+    
+    _sport = validSports.contains(mappedSport) ? mappedSport : 'FOOTBALL';
+    _surface = validSurfaces.contains(mappedSurface) ? mappedSurface : 'ARTIFICIAL_GRASS';
+    _isIndoor = turf.size?.toLowerCase().contains('indoor') ?? false;
   }
 
   Future<void> _loadOwnerData() async {
@@ -347,7 +362,7 @@ class _OwnerCreateTurfScreenState extends ConsumerState<OwnerCreateTurfScreen> {
                       Expanded(
                         child: DropdownButtonHideUnderline(
                           child: DropdownButtonFormField<String>(
-                            initialValue: _sport,
+                            value: _sport,
                             isExpanded: true,
                             icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textHint),
                             decoration: const InputDecoration(labelText: 'Primary Sport', border: InputBorder.none, isDense: true),
@@ -361,7 +376,7 @@ class _OwnerCreateTurfScreenState extends ConsumerState<OwnerCreateTurfScreen> {
                       Expanded(
                         child: DropdownButtonHideUnderline(
                           child: DropdownButtonFormField<String>(
-                            initialValue: _surface,
+                            value: _surface,
                             isExpanded: true,
                             icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textHint),
                             decoration: const InputDecoration(labelText: 'Surface Type', border: InputBorder.none, isDense: true),

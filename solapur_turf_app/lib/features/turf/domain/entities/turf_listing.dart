@@ -3,7 +3,41 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'turf_listing.freezed.dart';
 
 enum SportType { football, cricket, basketball, volleyball, tennis, badminton, multiSport }
-enum SurfaceType { naturalGrass, artificialGrass, concrete, wooden, clay }
+enum SurfaceType {
+  @JsonValue('ARTIFICIAL_GRASS')
+  artificialGrass,
+  @JsonValue('NATURAL_GRASS')
+  naturalGrass,
+  @JsonValue('CONCRETE')
+  concrete,
+  @JsonValue('WOODEN')
+  wooden,
+  @JsonValue('SYNTHETIC_HARD_COURT')
+  syntheticHardCourt,
+  @JsonValue('CLAY')
+  clay
+}
+
+extension SurfaceTypeX on SurfaceType {
+  String get label => switch (this) {
+        SurfaceType.artificialGrass => 'Artificial Grass',
+        SurfaceType.naturalGrass => 'Natural Grass',
+        SurfaceType.concrete => 'Concrete',
+        SurfaceType.wooden => 'Wooden Floor',
+        SurfaceType.syntheticHardCourt => 'Hard Court',
+        SurfaceType.clay => 'Clay',
+      };
+
+  static SurfaceType fromString(String s) => switch (s.toUpperCase()) {
+        'NATURAL_GRASS' => SurfaceType.naturalGrass,
+        'CONCRETE' => SurfaceType.concrete,
+        'WOODEN' => SurfaceType.wooden,
+        'SYNTHETIC_HARD_COURT' => SurfaceType.syntheticHardCourt,
+        'HARD_COURT' => SurfaceType.syntheticHardCourt,
+        'CLAY' => SurfaceType.clay,
+        _ => SurfaceType.artificialGrass,
+      };
+}
 
 extension SportTypeX on SportType {
   String get label => switch (this) {

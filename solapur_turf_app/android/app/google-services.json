@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "908595032755",
+    "project_id": "solapur-turf-booking",
+    "storage_bucket": "solapur-turf-booking.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:908595032755:android:39c58454b60e4f115cb6c6",
+        "android_client_info": {
+          "package_name": "com.solapur.solapur_turf_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApveZ0ZP8mCLD7FOrp1wEL1-0myLpmIZg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
