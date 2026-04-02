@@ -16,6 +16,8 @@ import com.solapur.turf.exception.ApiException;
 import com.solapur.turf.repository.TurfOwnerRepository;
 import com.solapur.turf.repository.UserRepository;
 import com.solapur.turf.repository.UserWalletRepository;
+import com.solapur.turf.repository.OtpCodeRepository;
+import com.solapur.turf.entity.OtpCode;
 import com.solapur.turf.security.CustomUserDetails;
 import com.solapur.turf.security.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -39,11 +41,13 @@ public class AuthService {
     private final UserRepository userRepository;
     private final UserWalletRepository userWalletRepository;
     private final TurfOwnerRepository turfOwnerRepository;
+    private final OtpCodeRepository otpCodeRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final NotificationService notificationService;
 
     // ─── Register ────────────────────────────────────────────────────────────
 
@@ -248,6 +252,52 @@ public class AuthService {
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    @Transactional
+    public void sendForgotPasswordOtp(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ApiException("User not found with this email", HttpStatus.NOT_FOUND));
+
+        // Generate 6 digit OTP
+        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+
+        // Cleanup existing OTPs for this email
+        otpCodeRepository.deleteByEmail(email);
+
+        OtpCode otpCode = OtpCode.builder()
+                .email(email)
+                .code(otp)
+                .expiry(java.time.LocalDateTime.now().plusMinutes(10))
+                .build();
+
+        otpCodeRepository.save(otpCode);
+
+        // Send Email
+        notificationService.sendOtpEmail(email, otp);
+        log.info("Reset OTP generated and email sent for: {}", email);
+    }
+
+    @Transactional
+    public void resetPasswordWithOtp(com.solapur.turf.dto.ResetPasswordRequest request) {
+        OtpCode otpCode = otpCodeRepository.findTopByEmailAndCodeAndIsUsedFalseOrderByCreatedAtDesc(
+                request.getEmail(), request.getOtp())
+                .orElseThrow(() -> new ApiException("Invalid or expired OTP", HttpStatus.BAD_REQUEST));
+
+        if (otpCode.isExpired()) {
+            throw new ApiException("OTP has expired. Please request a new one.", HttpStatus.BAD_REQUEST);
+        }
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        otpCode.setUsed(true);
+        otpCodeRepository.save(otpCode);
+        
+        log.info("Password reset successful for user: {}", request.getEmail());
     }
 
     // ─── Private Helpers ─────────────────────────────────────────────────────

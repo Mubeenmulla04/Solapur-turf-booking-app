@@ -93,13 +93,32 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(dto, "User profile fetched successfully"));
     }
 
-    // ─── POST /api/auth/change-password ───────────────────────────────────────
     @PostMapping("/change-password")
     public ResponseEntity<ApiResponse<Object>> changePassword(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ChangePasswordRequest request) {
         authService.changePassword(userDetails.getUser().getId(), request);
         return ResponseEntity.ok(ApiResponse.success(null, "Password changed successfully"));
+    }
+
+    // ─── POST /api/auth/forgot-password/request ───────────────────────────────
+    @PostMapping("/forgot-password/request")
+    public ResponseEntity<ApiResponse<Object>> requestForgotPassword(
+            @RequestBody java.util.Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        authService.sendForgotPasswordOtp(email);
+        return ResponseEntity.ok(ApiResponse.success(null, "OTP sent to your email"));
+    }
+
+    // ─── POST /api/auth/forgot-password/reset ─────────────────────────────────
+    @PostMapping("/forgot-password/reset")
+    public ResponseEntity<ApiResponse<Object>> resetPasswordWithOtp(
+            @Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPasswordWithOtp(request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Password reset successfully"));
     }
 
     // ─── Helper ───────────────────────────────────────────────────────────────

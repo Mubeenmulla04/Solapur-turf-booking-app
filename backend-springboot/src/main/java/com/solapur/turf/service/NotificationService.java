@@ -8,6 +8,8 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,12 @@ import java.io.IOException;
 @Slf4j
 @Service
 public class NotificationService {
+
+    private final JavaMailSender mailSender;
+
+    public NotificationService(JavaMailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
     @Value("${firebase.config.path:}")
     private String firebaseConfigPath;
@@ -67,6 +75,21 @@ public class NotificationService {
             log.info("Successfully sent message: " + response);
         } catch (Exception e) {
             log.error("Error sending FCM notification: {}", e.getMessage());
+        }
+    }
+
+    public void sendOtpEmail(String to, String otp) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject("Solapur Turf - Reset Password OTP");
+            message.setText("Your OTP for resetting your password is: " + otp + 
+                "\n\nThis OTP is valid for 10 minutes. Do not share it with anyone.");
+            
+            mailSender.send(message);
+            log.info("OTP email sent successfully to: {}", to);
+        } catch (Exception e) {
+            log.error("Failed to send OTP email to {}: {}", to, e.getMessage());
         }
     }
 }

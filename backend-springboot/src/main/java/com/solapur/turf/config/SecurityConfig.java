@@ -45,6 +45,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/refresh").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/forgot-password/**").permitAll()
                 // ── Auth endpoints that require a valid token ─────────────
                 .requestMatchers(HttpMethod.POST,  "/api/auth/logout").authenticated()
                 .requestMatchers(HttpMethod.GET,   "/api/auth/me").authenticated()
