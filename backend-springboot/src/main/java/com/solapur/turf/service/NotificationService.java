@@ -29,24 +29,47 @@ public class NotificationService {
     @Value("${firebase.config.path:}")
     private String firebaseConfigPath;
 
+    @Value("${firebase.config.json:}")
+    private String firebaseConfigJson;
+
     @PostConstruct
     public void initialize() {
         try {
-            if (firebaseConfigPath == null || firebaseConfigPath.isEmpty()) {
-                log.warn("Firebase config path not provided. Push notifications will be disabled.");
+            GoogleCredentials credentials = null;
+
+            // 1. Try to load from provided JSON string (Environment Variable)
+            if (firebaseConfigJson != null && !firebaseConfigJson.isBlank()) {
+                credentials = GoogleCredentials.fromStream(
+                        new java.io.ByteArrayInputStream(firebaseConfigJson.getBytes()));
+                log.info("Loading Firebase credentials from provided JSON string.");
+            } 
+            // 2. Try to load from Classpath file
+            else if (firebaseConfigPath != null && !firebaseConfigPath.isBlank()) {
+                org.springframework.core.io.Resource resource = new org.springframework.core.io.ClassPathResource(firebaseConfigPath);
+                if (resource.exists()) {
+                    credentials = GoogleCredentials.fromStream(resource.getInputStream());
+                    log.info("Loading Firebase credentials from file: {}", firebaseConfigPath);
+                } else {
+                    log.warn("Firebase config file not found at: {}. Skipping initialization.", firebaseConfigPath);
+                    return;
+                }
+            } else {
+                log.warn("No Firebase configuration provided. Push notifications will be disabled.");
                 return;
             }
-            FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(
-                            new org.springframework.core.io.ClassPathResource(firebaseConfigPath).getInputStream()))
-                    .build();
 
-            if (FirebaseApp.getApps().isEmpty()) {
-                FirebaseApp.initializeApp(options);
-                log.info("Firebase application has been initialized successfully.");
+            if (credentials != null) {
+                FirebaseOptions options = FirebaseOptions.builder()
+                        .setCredentials(credentials)
+                        .build();
+
+                if (FirebaseApp.getApps().isEmpty()) {
+                    FirebaseApp.initializeApp(options);
+                    log.info("Firebase application has been initialized successfully.");
+                }
             }
-        } catch (IOException e) {
-            log.error("Error initializing Firebase: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Failed to initialize Firebase: {}", e.getMessage());
         }
     }
 
