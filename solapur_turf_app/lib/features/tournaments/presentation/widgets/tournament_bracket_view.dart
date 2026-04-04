@@ -4,7 +4,7 @@ import 'package:gap/gap.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/tournament.dart';
 import 'bracket_match_card.dart';
-import '../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import 'update_score_modal.dart';
 
 class TournamentBracketView extends ConsumerWidget {

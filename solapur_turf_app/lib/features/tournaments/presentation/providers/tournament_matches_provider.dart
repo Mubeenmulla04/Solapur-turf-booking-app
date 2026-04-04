@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/network/api_client.dart';
 import '../../domain/entities/tournament.dart';
+import '../../../teams/domain/entities/team.dart';
 
 part 'tournament_matches_provider.g.dart';
 
@@ -17,7 +18,7 @@ class TournamentMatches extends _$TournamentMatches {
         matchId: j['id'].toString(),
         tournamentId: tournamentId,
         round: j['round'] as int,
-        matchNumber: j['matchNumber'] as int,
+        matchNumber: j['matchOrder'] as int,
         teamA: j['teamA'] != null ? Team.fromJson(j['teamA']) : null,
         teamB: j['teamB'] != null ? Team.fromJson(j['teamB']) : null,
         scoreA: j['scoreA'] as int?,

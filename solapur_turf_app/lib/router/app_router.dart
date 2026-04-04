@@ -6,6 +6,8 @@ import '../features/auth/presentation/providers/auth_provider.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
 import '../features/auth/presentation/screens/splash_screen.dart';
+import '../features/auth/presentation/screens/forgot_password_email_screen.dart';
+import '../features/auth/presentation/screens/forgot_password_otp_screen.dart';
 import '../features/turf/presentation/screens/turf_browse_screen.dart';
 import '../features/turf/presentation/screens/turf_detail_screen.dart';
 import '../features/booking/presentation/screens/booking_screen.dart';
@@ -88,6 +90,19 @@ GoRouter appRouter(Ref ref) {
         path: '/auth/register',
         name: 'register',
         builder: (_, __) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/auth/forgot-password',
+        name: 'forgotPassword',
+        builder: (_, __) => const ForgotPasswordEmailScreen(),
+      ),
+      GoRoute(
+        path: '/auth/forgot-password/otp',
+        name: 'forgotPasswordOtp',
+        builder: (_, state) {
+          final email = state.extra as String;
+          return ForgotPasswordOtpScreen(email: email);
+        },
       ),
 
       // ── User Shell ────────────────────────────────────────────────────────

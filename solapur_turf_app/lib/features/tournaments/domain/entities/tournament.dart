@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../../../teams/domain/entities/team.dart';
 
 part 'tournament.freezed.dart';
 
@@ -34,6 +35,8 @@ class Tournament with _$Tournament {
     required TournamentStatus status,
     required String startDate,
     required String endDate,
+    String? turfId,
+    String? turfName,
     String? description,
   }) = _Tournament;
 }
@@ -47,10 +50,8 @@ class TournamentMatch with _$TournamentMatch {
     required String tournamentId,
     required int round,
     required int matchNumber,
-    String? teamAId,
-    String? teamBId,
-    String? teamAName,
-    String? teamBName,
+    Team? teamA,
+    Team? teamB,
     String? winnerId,
     int? scoreA,
     int? scoreB,

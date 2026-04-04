@@ -6,7 +6,7 @@ part of 'tournament_matches_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$tournamentMatchesHash() => r'ad5471a4fd3080bfa691f34e2410b3fbd4282445';
+String _$tournamentMatchesHash() => r'1e27e49c8abf53ac22cba392a9476568e48b2df4';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -29,17 +29,26 @@ class _SystemHash {
   }
 }
 
-/// See also [tournamentMatches].
-@ProviderFor(tournamentMatches)
+abstract class _$TournamentMatches
+    extends BuildlessAutoDisposeAsyncNotifier<List<TournamentMatch>> {
+  late final String tournamentId;
+
+  FutureOr<List<TournamentMatch>> build(
+    String tournamentId,
+  );
+}
+
+/// See also [TournamentMatches].
+@ProviderFor(TournamentMatches)
 const tournamentMatchesProvider = TournamentMatchesFamily();
 
-/// See also [tournamentMatches].
+/// See also [TournamentMatches].
 class TournamentMatchesFamily
     extends Family<AsyncValue<List<TournamentMatch>>> {
-  /// See also [tournamentMatches].
+  /// See also [TournamentMatches].
   const TournamentMatchesFamily();
 
-  /// See also [tournamentMatches].
+  /// See also [TournamentMatches].
   TournamentMatchesProvider call(
     String tournamentId,
   ) {
@@ -72,17 +81,14 @@ class TournamentMatchesFamily
   String? get name => r'tournamentMatchesProvider';
 }
 
-/// See also [tournamentMatches].
-class TournamentMatchesProvider
-    extends AutoDisposeFutureProvider<List<TournamentMatch>> {
-  /// See also [tournamentMatches].
+/// See also [TournamentMatches].
+class TournamentMatchesProvider extends AutoDisposeAsyncNotifierProviderImpl<
+    TournamentMatches, List<TournamentMatch>> {
+  /// See also [TournamentMatches].
   TournamentMatchesProvider(
     String tournamentId,
   ) : this._internal(
-          (ref) => tournamentMatches(
-            ref as TournamentMatchesRef,
-            tournamentId,
-          ),
+          () => TournamentMatches()..tournamentId = tournamentId,
           from: tournamentMatchesProvider,
           name: r'tournamentMatchesProvider',
           debugGetCreateSourceHash:
@@ -108,14 +114,20 @@ class TournamentMatchesProvider
   final String tournamentId;
 
   @override
-  Override overrideWith(
-    FutureOr<List<TournamentMatch>> Function(TournamentMatchesRef provider)
-        create,
+  FutureOr<List<TournamentMatch>> runNotifierBuild(
+    covariant TournamentMatches notifier,
   ) {
+    return notifier.build(
+      tournamentId,
+    );
+  }
+
+  @override
+  Override overrideWith(TournamentMatches Function() create) {
     return ProviderOverride(
       origin: this,
       override: TournamentMatchesProvider._internal(
-        (ref) => create(ref as TournamentMatchesRef),
+        () => create()..tournamentId = tournamentId,
         from: from,
         name: null,
         dependencies: null,
@@ -127,7 +139,8 @@ class TournamentMatchesProvider
   }
 
   @override
-  AutoDisposeFutureProviderElement<List<TournamentMatch>> createElement() {
+  AutoDisposeAsyncNotifierProviderElement<TournamentMatches,
+      List<TournamentMatch>> createElement() {
     return _TournamentMatchesProviderElement(this);
   }
 
@@ -149,14 +162,14 @@ class TournamentMatchesProvider
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 mixin TournamentMatchesRef
-    on AutoDisposeFutureProviderRef<List<TournamentMatch>> {
+    on AutoDisposeAsyncNotifierProviderRef<List<TournamentMatch>> {
   /// The parameter `tournamentId` of this provider.
   String get tournamentId;
 }
 
 class _TournamentMatchesProviderElement
-    extends AutoDisposeFutureProviderElement<List<TournamentMatch>>
-    with TournamentMatchesRef {
+    extends AutoDisposeAsyncNotifierProviderElement<TournamentMatches,
+        List<TournamentMatch>> with TournamentMatchesRef {
   _TournamentMatchesProviderElement(super.provider);
 
   @override

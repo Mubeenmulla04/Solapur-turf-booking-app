@@ -99,7 +99,7 @@ class _UpdateScoreModalState extends ConsumerState<UpdateScoreModal> {
             children: [
               Expanded(
                 child: _ScoreInput(
-                  teamName: widget.match.teamA?.name ?? 'TBD',
+                  teamName: widget.match.teamA?.teamName ?? 'TBD',
                   controller: _scoreAController,
                 ),
               ),
@@ -109,7 +109,7 @@ class _UpdateScoreModalState extends ConsumerState<UpdateScoreModal> {
               ),
               Expanded(
                 child: _ScoreInput(
-                  teamName: widget.match.teamB?.name ?? 'TBD',
+                  teamName: widget.match.teamB?.teamName ?? 'TBD',
                   controller: _scoreBController,
                 ),
               ),

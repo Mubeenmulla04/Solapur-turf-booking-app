@@ -7,7 +7,9 @@ import '../../../../core/network/token_storage.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/user.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../domain/repositories/auth_repository.dart';
+
 
 part 'auth_provider.freezed.dart';
 part 'auth_provider.g.dart';

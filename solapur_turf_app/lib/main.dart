@@ -21,7 +21,7 @@ void main() async {
   }
 
   await initializeDateFormatting('en_IN', null);
-  final container = ProviderScope(child: const SolapurTurfApp());
+  final container = ProviderContainer();
   
   // Initialize notification service early
   try {
@@ -30,7 +30,12 @@ void main() async {
      debugPrint('Notification Service initialization failed: $e');
   }
 
-  runApp(container);
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const SolapurTurfApp(),
+    ),
+  );
 }
 
 class SolapurTurfApp extends ConsumerWidget {

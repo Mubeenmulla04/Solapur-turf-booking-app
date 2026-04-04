@@ -403,41 +403,78 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
               // ── Sticky Confirmation Bar ──
               if (_selectedSlots.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceLight,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, -5),
-                      )
-                    ],
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                  ),
+                PopScope(
+                  canPop: false,
+                  onPopInvokedWithResult: (didPop, result) async {
+                    if (didPop) return;
+                    final bool? exit = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Cancel Booking?'),
+                        content: const Text('Are you sure you want to exit? Your progress will be lost and the slot will be released.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('CONTINUE'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('YES, EXIT'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (exit == true) {
+                      if (_pendingBookingId != null) {
+                        await ref.read(bookingNotifierProvider.notifier).cancelBooking(_pendingBookingId!);
+                      }
+                      if (context.mounted) Navigator.of(context).pop();
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceLight,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 20,
+                          offset: const Offset(0, -5),
+                        )
+                      ],
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                    ),
                   child: Row(
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            'Total Amount',
-                            style: TextStyle(
+                          Text(
+                            _paymentMethod == PaymentMethod.partialOnlineCash ? 'Pay Now (50%)' : 'Total Amount',
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: AppColors.textSecondaryLight,
                             ),
                           ),
                           Text(
-                            AppFormatters.formatCurrency(_totalAmount),
+                            AppFormatters.formatCurrency(
+                              _paymentMethod == PaymentMethod.partialOnlineCash
+                                  ? _totalAmount * 0.5
+                                  : _totalAmount,
+                            ),
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimaryLight,
                             ),
                           ),
+                          if (_paymentMethod == PaymentMethod.partialOnlineCash)
+                            Text(
+                              'Total: ${AppFormatters.formatCurrency(_totalAmount)}',
+                              style: const TextStyle(fontSize: 10, color: AppColors.textHint),
+                            ),
                         ],
                       ),
                       const Gap(24),
@@ -466,12 +503,13 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                                 Gap(8),
                                 Icon(Icons.arrow_forward_rounded, size: 20),
                               ],
-                            ),
+                              ),
                         ),
                       ),
                     ],
                   ),
                 ),
+              ),
             ],
           ),
         ),
@@ -735,7 +773,7 @@ class _PaymentMethodSelector extends StatelessWidget {
       children: methods.map((pm) {
         final isSelected = selected == pm;
         final advanceAmount = pm == PaymentMethod.partialOnlineCash
-            ? AppConstants.cashBookingAdvanceAmount
+            ? totalAmount * 0.5
             : totalAmount;
 
         return GestureDetector(
@@ -821,7 +859,7 @@ class _CheckoutReceipt extends StatelessWidget {
   Widget build(BuildContext context) {
     final onlineAmount =
         paymentMethod == PaymentMethod.partialOnlineCash
-            ? AppConstants.cashBookingAdvanceAmount
+            ? totalAmount * 0.5
             : totalAmount;
     final cashAmount = totalAmount - onlineAmount;
 

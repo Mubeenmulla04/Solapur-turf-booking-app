@@ -138,7 +138,8 @@ class ProfileScreen extends ConsumerWidget {
                             icon: Icons.stars_rounded,
                             iconColor: AppColors.warning,
                             onTap: () {
-                            onTap: () => _showLoyaltyInfo(context, user?.loyaltyPoints ?? 0),
+                              _showLoyaltyInfo(context, user?.loyaltyPoints ?? 0);
+                            },
                           ),
                         ),
                       ],
@@ -368,7 +369,7 @@ class ProfileScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(28),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.backgroundLight,
           borderRadius: BorderRadius.circular(32),
         ),

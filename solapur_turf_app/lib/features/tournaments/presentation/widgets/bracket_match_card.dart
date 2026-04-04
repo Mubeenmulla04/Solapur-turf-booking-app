@@ -76,9 +76,9 @@ class BracketMatchCard extends StatelessWidget {
 
             // Team A
             _buildTeamRow(
-              match.teamAName ?? 'TBD',
+              match.teamA?.teamName ?? 'TBD',
               match.scoreA,
-              match.winnerId == match.teamAId && isCompleted,
+              match.winnerId == match.teamA?.teamId && isCompleted,
             ),
             
             const Padding(
@@ -88,9 +88,9 @@ class BracketMatchCard extends StatelessWidget {
 
             // Team B
             _buildTeamRow(
-              match.teamBName ?? 'TBD',
+              match.teamB?.teamName ?? 'TBD',
               match.scoreB,
-              match.winnerId == match.teamBId && isCompleted,
+              match.winnerId == match.teamB?.teamId && isCompleted,
             ),
           ],
         ),

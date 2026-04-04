@@ -19,134 +19,136 @@ class BookingConfirmationScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
-        child: Column(
-          children: [
-            const Gap(60),
-            // Success Icon
-            Center(
-              child: Container(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              const Gap(60),
+              // Success Icon
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    color: AppColors.success,
+                    size: 80,
+                  ),
+                ),
+              ),
+              const Gap(24),
+              const Text(
+                'Booking Confirmed!',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimaryLight,
+                ),
+              ),
+              const Gap(8),
+              Text(
+                'Your slot has been successfully reserved.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textSecondaryLight,
+                ),
+              ),
+              const Gap(40),
+              
+              // Booking Details Card
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceLight,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      _DetailRow(
+                        label: 'Turf',
+                        value: booking.turfName,
+                        isBold: true,
+                      ),
+                      const Divider(height: 32),
+                      _DetailRow(
+                        label: 'Date',
+                        value: AppFormatters.formatDate(DateTime.parse(booking.bookingDate)),
+                      ),
+                      const Gap(16),
+                      _DetailRow(
+                        label: 'Time',
+                        value: '${AppFormatters.formatTimeString(booking.startTime)} - ${AppFormatters.formatTimeString(booking.endTime)}',
+                      ),
+                      const Gap(16),
+                      _DetailRow(
+                        label: 'Payment',
+                        value: booking.paymentMethod.label,
+                      ),
+                      const Divider(height: 32),
+                      _DetailRow(
+                        label: 'Total Amount',
+                        value: AppFormatters.formatCurrency(booking.totalAmount),
+                        isBold: true,
+                        valueColor: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              
+              const Gap(40),
+              
+              // Actions
+              Padding(
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.check_circle_rounded,
-                  color: AppColors.success,
-                  size: 80,
-                ),
-              ),
-            ),
-            const Gap(24),
-            const Text(
-              'Booking Confirmed!',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimaryLight,
-              ),
-            ),
-            const Gap(8),
-            Text(
-              'Your slot has been successfully reserved.',
-              style: TextStyle(
-                fontSize: 16,
-                color: AppColors.textSecondaryLight,
-              ),
-            ),
-            const Gap(40),
-            
-            // Booking Details Card
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 20,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
                 child: Column(
                   children: [
-                    _DetailRow(
-                      label: 'Turf',
-                      value: booking.turfName,
-                      isBold: true,
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => context.go('/user/bookings'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'View My Bookings',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
                     ),
-                    const Divider(height: 32),
-                    _DetailRow(
-                      label: 'Date',
-                      value: AppFormatters.formatDate(DateTime.parse(booking.bookingDate)),
-                    ),
-                    const Gap(16),
-                    _DetailRow(
-                      label: 'Time',
-                      value: '${AppFormatters.formatTimeString(booking.startTime)} - ${AppFormatters.formatTimeString(booking.endTime)}',
-                    ),
-                    const Gap(16),
-                    _DetailRow(
-                      label: 'Payment',
-                      value: booking.paymentMethod.label,
-                    ),
-                    const Divider(height: 32),
-                    _DetailRow(
-                      label: 'Total Amount',
-                      value: AppFormatters.formatCurrency(booking.totalAmount),
-                      isBold: true,
-                      valueColor: AppColors.primary,
+                    const Gap(12),
+                    TextButton(
+                      onPressed: () => context.go('/user/dashboard'),
+                      child: const Text(
+                        'Back to Home',
+                        style: TextStyle(
+                          color: AppColors.textSecondaryLight,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-            
-            const Spacer(),
-            
-            // Actions
-            Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => context.go('/user/bookings'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'View My Bookings',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                  const Gap(12),
-                  TextButton(
-                    onPressed: () => context.go('/user/dashboard'),
-                    child: const Text(
-                      'Back to Home',
-                      style: TextStyle(
-                        color: AppColors.textSecondaryLight,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

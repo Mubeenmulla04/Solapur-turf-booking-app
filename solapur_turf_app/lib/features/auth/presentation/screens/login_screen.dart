@@ -197,7 +197,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: TextButton(
-                                  onPressed: () {},
+                                  onPressed: isLoading ? null : () {
+                                    HapticFeedback.selectionClick();
+                                    context.push('/auth/forgot-password');
+                                  },
                                   style: TextButton.styleFrom(
                                     foregroundColor: const Color(0xFF10B981),
                                     padding: const EdgeInsets.symmetric(vertical: 12),

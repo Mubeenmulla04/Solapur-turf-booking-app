@@ -27,6 +27,8 @@ mixin _$Tournament {
   TournamentStatus get status => throw _privateConstructorUsedError;
   String get startDate => throw _privateConstructorUsedError;
   String get endDate => throw _privateConstructorUsedError;
+  String? get turfId => throw _privateConstructorUsedError;
+  String? get turfName => throw _privateConstructorUsedError;
   String? get description => throw _privateConstructorUsedError;
 
   /// Create a copy of Tournament
@@ -54,6 +56,8 @@ abstract class $TournamentCopyWith<$Res> {
       TournamentStatus status,
       String startDate,
       String endDate,
+      String? turfId,
+      String? turfName,
       String? description});
 }
 
@@ -83,6 +87,8 @@ class _$TournamentCopyWithImpl<$Res, $Val extends Tournament>
     Object? status = null,
     Object? startDate = null,
     Object? endDate = null,
+    Object? turfId = freezed,
+    Object? turfName = freezed,
     Object? description = freezed,
   }) {
     return _then(_value.copyWith(
@@ -130,6 +136,14 @@ class _$TournamentCopyWithImpl<$Res, $Val extends Tournament>
           ? _value.endDate
           : endDate // ignore: cast_nullable_to_non_nullable
               as String,
+      turfId: freezed == turfId
+          ? _value.turfId
+          : turfId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      turfName: freezed == turfName
+          ? _value.turfName
+          : turfName // ignore: cast_nullable_to_non_nullable
+              as String?,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -158,6 +172,8 @@ abstract class _$$TournamentImplCopyWith<$Res>
       TournamentStatus status,
       String startDate,
       String endDate,
+      String? turfId,
+      String? turfName,
       String? description});
 }
 
@@ -185,6 +201,8 @@ class __$$TournamentImplCopyWithImpl<$Res>
     Object? status = null,
     Object? startDate = null,
     Object? endDate = null,
+    Object? turfId = freezed,
+    Object? turfName = freezed,
     Object? description = freezed,
   }) {
     return _then(_$TournamentImpl(
@@ -232,6 +250,14 @@ class __$$TournamentImplCopyWithImpl<$Res>
           ? _value.endDate
           : endDate // ignore: cast_nullable_to_non_nullable
               as String,
+      turfId: freezed == turfId
+          ? _value.turfId
+          : turfId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      turfName: freezed == turfName
+          ? _value.turfName
+          : turfName // ignore: cast_nullable_to_non_nullable
+              as String?,
       description: freezed == description
           ? _value.description
           : description // ignore: cast_nullable_to_non_nullable
@@ -255,6 +281,8 @@ class _$TournamentImpl implements _Tournament {
       required this.status,
       required this.startDate,
       required this.endDate,
+      this.turfId,
+      this.turfName,
       this.description});
 
   @override
@@ -280,11 +308,15 @@ class _$TournamentImpl implements _Tournament {
   @override
   final String endDate;
   @override
+  final String? turfId;
+  @override
+  final String? turfName;
+  @override
   final String? description;
 
   @override
   String toString() {
-    return 'Tournament(tournamentId: $tournamentId, name: $name, sportType: $sportType, format: $format, entryFee: $entryFee, prizePool: $prizePool, maxTeams: $maxTeams, registeredTeams: $registeredTeams, status: $status, startDate: $startDate, endDate: $endDate, description: $description)';
+    return 'Tournament(tournamentId: $tournamentId, name: $name, sportType: $sportType, format: $format, entryFee: $entryFee, prizePool: $prizePool, maxTeams: $maxTeams, registeredTeams: $registeredTeams, status: $status, startDate: $startDate, endDate: $endDate, turfId: $turfId, turfName: $turfName, description: $description)';
   }
 
   @override
@@ -310,6 +342,9 @@ class _$TournamentImpl implements _Tournament {
             (identical(other.startDate, startDate) ||
                 other.startDate == startDate) &&
             (identical(other.endDate, endDate) || other.endDate == endDate) &&
+            (identical(other.turfId, turfId) || other.turfId == turfId) &&
+            (identical(other.turfName, turfName) ||
+                other.turfName == turfName) &&
             (identical(other.description, description) ||
                 other.description == description));
   }
@@ -328,6 +363,8 @@ class _$TournamentImpl implements _Tournament {
       status,
       startDate,
       endDate,
+      turfId,
+      turfName,
       description);
 
   /// Create a copy of Tournament
@@ -352,6 +389,8 @@ abstract class _Tournament implements Tournament {
       required final TournamentStatus status,
       required final String startDate,
       required final String endDate,
+      final String? turfId,
+      final String? turfName,
       final String? description}) = _$TournamentImpl;
 
   @override
@@ -377,6 +416,10 @@ abstract class _Tournament implements Tournament {
   @override
   String get endDate;
   @override
+  String? get turfId;
+  @override
+  String? get turfName;
+  @override
   String? get description;
 
   /// Create a copy of Tournament
@@ -393,10 +436,8 @@ mixin _$TournamentMatch {
   String get tournamentId => throw _privateConstructorUsedError;
   int get round => throw _privateConstructorUsedError;
   int get matchNumber => throw _privateConstructorUsedError;
-  String? get teamAId => throw _privateConstructorUsedError;
-  String? get teamBId => throw _privateConstructorUsedError;
-  String? get teamAName => throw _privateConstructorUsedError;
-  String? get teamBName => throw _privateConstructorUsedError;
+  Team? get teamA => throw _privateConstructorUsedError;
+  Team? get teamB => throw _privateConstructorUsedError;
   String? get winnerId => throw _privateConstructorUsedError;
   int? get scoreA => throw _privateConstructorUsedError;
   int? get scoreB => throw _privateConstructorUsedError;
@@ -421,15 +462,16 @@ abstract class $TournamentMatchCopyWith<$Res> {
       String tournamentId,
       int round,
       int matchNumber,
-      String? teamAId,
-      String? teamBId,
-      String? teamAName,
-      String? teamBName,
+      Team? teamA,
+      Team? teamB,
       String? winnerId,
       int? scoreA,
       int? scoreB,
       TournamentMatchStatus status,
       String? scheduledStartTime});
+
+  $TeamCopyWith<$Res>? get teamA;
+  $TeamCopyWith<$Res>? get teamB;
 }
 
 /// @nodoc
@@ -451,10 +493,8 @@ class _$TournamentMatchCopyWithImpl<$Res, $Val extends TournamentMatch>
     Object? tournamentId = null,
     Object? round = null,
     Object? matchNumber = null,
-    Object? teamAId = freezed,
-    Object? teamBId = freezed,
-    Object? teamAName = freezed,
-    Object? teamBName = freezed,
+    Object? teamA = freezed,
+    Object? teamB = freezed,
     Object? winnerId = freezed,
     Object? scoreA = freezed,
     Object? scoreB = freezed,
@@ -478,22 +518,14 @@ class _$TournamentMatchCopyWithImpl<$Res, $Val extends TournamentMatch>
           ? _value.matchNumber
           : matchNumber // ignore: cast_nullable_to_non_nullable
               as int,
-      teamAId: freezed == teamAId
-          ? _value.teamAId
-          : teamAId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      teamBId: freezed == teamBId
-          ? _value.teamBId
-          : teamBId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      teamAName: freezed == teamAName
-          ? _value.teamAName
-          : teamAName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      teamBName: freezed == teamBName
-          ? _value.teamBName
-          : teamBName // ignore: cast_nullable_to_non_nullable
-              as String?,
+      teamA: freezed == teamA
+          ? _value.teamA
+          : teamA // ignore: cast_nullable_to_non_nullable
+              as Team?,
+      teamB: freezed == teamB
+          ? _value.teamB
+          : teamB // ignore: cast_nullable_to_non_nullable
+              as Team?,
       winnerId: freezed == winnerId
           ? _value.winnerId
           : winnerId // ignore: cast_nullable_to_non_nullable
@@ -516,6 +548,34 @@ class _$TournamentMatchCopyWithImpl<$Res, $Val extends TournamentMatch>
               as String?,
     ) as $Val);
   }
+
+  /// Create a copy of TournamentMatch
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $TeamCopyWith<$Res>? get teamA {
+    if (_value.teamA == null) {
+      return null;
+    }
+
+    return $TeamCopyWith<$Res>(_value.teamA!, (value) {
+      return _then(_value.copyWith(teamA: value) as $Val);
+    });
+  }
+
+  /// Create a copy of TournamentMatch
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $TeamCopyWith<$Res>? get teamB {
+    if (_value.teamB == null) {
+      return null;
+    }
+
+    return $TeamCopyWith<$Res>(_value.teamB!, (value) {
+      return _then(_value.copyWith(teamB: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -531,15 +591,18 @@ abstract class _$$TournamentMatchImplCopyWith<$Res>
       String tournamentId,
       int round,
       int matchNumber,
-      String? teamAId,
-      String? teamBId,
-      String? teamAName,
-      String? teamBName,
+      Team? teamA,
+      Team? teamB,
       String? winnerId,
       int? scoreA,
       int? scoreB,
       TournamentMatchStatus status,
       String? scheduledStartTime});
+
+  @override
+  $TeamCopyWith<$Res>? get teamA;
+  @override
+  $TeamCopyWith<$Res>? get teamB;
 }
 
 /// @nodoc
@@ -559,10 +622,8 @@ class __$$TournamentMatchImplCopyWithImpl<$Res>
     Object? tournamentId = null,
     Object? round = null,
     Object? matchNumber = null,
-    Object? teamAId = freezed,
-    Object? teamBId = freezed,
-    Object? teamAName = freezed,
-    Object? teamBName = freezed,
+    Object? teamA = freezed,
+    Object? teamB = freezed,
     Object? winnerId = freezed,
     Object? scoreA = freezed,
     Object? scoreB = freezed,
@@ -586,22 +647,14 @@ class __$$TournamentMatchImplCopyWithImpl<$Res>
           ? _value.matchNumber
           : matchNumber // ignore: cast_nullable_to_non_nullable
               as int,
-      teamAId: freezed == teamAId
-          ? _value.teamAId
-          : teamAId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      teamBId: freezed == teamBId
-          ? _value.teamBId
-          : teamBId // ignore: cast_nullable_to_non_nullable
-              as String?,
-      teamAName: freezed == teamAName
-          ? _value.teamAName
-          : teamAName // ignore: cast_nullable_to_non_nullable
-              as String?,
-      teamBName: freezed == teamBName
-          ? _value.teamBName
-          : teamBName // ignore: cast_nullable_to_non_nullable
-              as String?,
+      teamA: freezed == teamA
+          ? _value.teamA
+          : teamA // ignore: cast_nullable_to_non_nullable
+              as Team?,
+      teamB: freezed == teamB
+          ? _value.teamB
+          : teamB // ignore: cast_nullable_to_non_nullable
+              as Team?,
       winnerId: freezed == winnerId
           ? _value.winnerId
           : winnerId // ignore: cast_nullable_to_non_nullable
@@ -634,10 +687,8 @@ class _$TournamentMatchImpl implements _TournamentMatch {
       required this.tournamentId,
       required this.round,
       required this.matchNumber,
-      this.teamAId,
-      this.teamBId,
-      this.teamAName,
-      this.teamBName,
+      this.teamA,
+      this.teamB,
       this.winnerId,
       this.scoreA,
       this.scoreB,
@@ -653,13 +704,9 @@ class _$TournamentMatchImpl implements _TournamentMatch {
   @override
   final int matchNumber;
   @override
-  final String? teamAId;
+  final Team? teamA;
   @override
-  final String? teamBId;
-  @override
-  final String? teamAName;
-  @override
-  final String? teamBName;
+  final Team? teamB;
   @override
   final String? winnerId;
   @override
@@ -673,7 +720,7 @@ class _$TournamentMatchImpl implements _TournamentMatch {
 
   @override
   String toString() {
-    return 'TournamentMatch(matchId: $matchId, tournamentId: $tournamentId, round: $round, matchNumber: $matchNumber, teamAId: $teamAId, teamBId: $teamBId, teamAName: $teamAName, teamBName: $teamBName, winnerId: $winnerId, scoreA: $scoreA, scoreB: $scoreB, status: $status, scheduledStartTime: $scheduledStartTime)';
+    return 'TournamentMatch(matchId: $matchId, tournamentId: $tournamentId, round: $round, matchNumber: $matchNumber, teamA: $teamA, teamB: $teamB, winnerId: $winnerId, scoreA: $scoreA, scoreB: $scoreB, status: $status, scheduledStartTime: $scheduledStartTime)';
   }
 
   @override
@@ -687,12 +734,8 @@ class _$TournamentMatchImpl implements _TournamentMatch {
             (identical(other.round, round) || other.round == round) &&
             (identical(other.matchNumber, matchNumber) ||
                 other.matchNumber == matchNumber) &&
-            (identical(other.teamAId, teamAId) || other.teamAId == teamAId) &&
-            (identical(other.teamBId, teamBId) || other.teamBId == teamBId) &&
-            (identical(other.teamAName, teamAName) ||
-                other.teamAName == teamAName) &&
-            (identical(other.teamBName, teamBName) ||
-                other.teamBName == teamBName) &&
+            (identical(other.teamA, teamA) || other.teamA == teamA) &&
+            (identical(other.teamB, teamB) || other.teamB == teamB) &&
             (identical(other.winnerId, winnerId) ||
                 other.winnerId == winnerId) &&
             (identical(other.scoreA, scoreA) || other.scoreA == scoreA) &&
@@ -709,10 +752,8 @@ class _$TournamentMatchImpl implements _TournamentMatch {
       tournamentId,
       round,
       matchNumber,
-      teamAId,
-      teamBId,
-      teamAName,
-      teamBName,
+      teamA,
+      teamB,
       winnerId,
       scoreA,
       scoreB,
@@ -735,10 +776,8 @@ abstract class _TournamentMatch implements TournamentMatch {
       required final String tournamentId,
       required final int round,
       required final int matchNumber,
-      final String? teamAId,
-      final String? teamBId,
-      final String? teamAName,
-      final String? teamBName,
+      final Team? teamA,
+      final Team? teamB,
       final String? winnerId,
       final int? scoreA,
       final int? scoreB,
@@ -754,13 +793,9 @@ abstract class _TournamentMatch implements TournamentMatch {
   @override
   int get matchNumber;
   @override
-  String? get teamAId;
+  Team? get teamA;
   @override
-  String? get teamBId;
-  @override
-  String? get teamAName;
-  @override
-  String? get teamBName;
+  Team? get teamB;
   @override
   String? get winnerId;
   @override

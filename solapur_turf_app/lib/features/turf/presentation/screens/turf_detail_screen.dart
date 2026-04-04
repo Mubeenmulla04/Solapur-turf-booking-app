@@ -11,7 +11,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../domain/entities/turf_listing.dart';
 import '../providers/turf_provider.dart';
-import '../../reviews/presentation/widgets/review_list_widget.dart';
+import '../../../reviews/presentation/widgets/review_list_widget.dart';
 
 class TurfDetailScreen extends ConsumerStatefulWidget {
   final String turfId;
