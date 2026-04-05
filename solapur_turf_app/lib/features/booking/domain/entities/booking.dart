@@ -16,8 +16,8 @@ extension PaymentMethodX on PaymentMethod {
 
   String get label => switch (this) {
         PaymentMethod.fullOnline => 'Full Online Payment',
-        PaymentMethod.partialOnlineCash => '50% Advance + Cash at Venue',
-        PaymentMethod.cashOnBooking => 'Cash at Venue',
+        PaymentMethod.partialOnlineCash => '₹50 Advance + Cash at Venue',
+        PaymentMethod.cashOnBooking => 'Full Cash at Venue',
         PaymentMethod.wallet => 'Wallet',
       };
 

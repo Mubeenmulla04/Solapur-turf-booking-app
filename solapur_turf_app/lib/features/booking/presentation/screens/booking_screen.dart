@@ -451,7 +451,9 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            _paymentMethod == PaymentMethod.partialOnlineCash ? 'Pay Now (50%)' : 'Total Amount',
+                            _paymentMethod == PaymentMethod.partialOnlineCash 
+                                ? 'Pay Now (₹50)' 
+                                : (_paymentMethod == PaymentMethod.cashOnBooking ? 'Pay at Venue' : 'Total Amount'),
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -461,8 +463,8 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                           Text(
                             AppFormatters.formatCurrency(
                               _paymentMethod == PaymentMethod.partialOnlineCash
-                                  ? _totalAmount * 0.5
-                                  : _totalAmount,
+                                  ? 50.0
+                                  : (_paymentMethod == PaymentMethod.cashOnBooking ? 0.0 : _totalAmount),
                             ),
                             style: const TextStyle(
                               fontSize: 24,
@@ -470,7 +472,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                               color: AppColors.textPrimaryLight,
                             ),
                           ),
-                          if (_paymentMethod == PaymentMethod.partialOnlineCash)
+                          if (_paymentMethod != PaymentMethod.fullOnline)
                             Text(
                               'Total: ${AppFormatters.formatCurrency(_totalAmount)}',
                               style: const TextStyle(fontSize: 10, color: AppColors.textHint),
@@ -767,14 +769,15 @@ class _PaymentMethodSelector extends StatelessWidget {
     final methods = [
       PaymentMethod.fullOnline,
       PaymentMethod.partialOnlineCash,
+      PaymentMethod.cashOnBooking,
     ];
 
     return Column(
       children: methods.map((pm) {
         final isSelected = selected == pm;
         final advanceAmount = pm == PaymentMethod.partialOnlineCash
-            ? totalAmount * 0.5
-            : totalAmount;
+            ? 50.0
+            : (pm == PaymentMethod.cashOnBooking ? 0.0 : totalAmount);
 
         return GestureDetector(
           onTap: () => onChanged(pm),
@@ -859,8 +862,8 @@ class _CheckoutReceipt extends StatelessWidget {
   Widget build(BuildContext context) {
     final onlineAmount =
         paymentMethod == PaymentMethod.partialOnlineCash
-            ? totalAmount * 0.5
-            : totalAmount;
+            ? 50.0
+            : (paymentMethod == PaymentMethod.cashOnBooking ? 0.0 : totalAmount);
     final cashAmount = totalAmount - onlineAmount;
 
     return Container(

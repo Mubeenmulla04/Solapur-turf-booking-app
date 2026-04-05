@@ -160,7 +160,7 @@ public class BookingService {
         // ── Payment status assignment ──────────────────────────────────────────
         BigDecimal advanceRequired = BigDecimal.ZERO;
         if (request.getPaymentMethod() == com.solapur.turf.enums.PaymentMethod.PARTIAL_ONLINE_CASH) {
-            advanceRequired = finalAmount.multiply(BigDecimal.valueOf(0.5)); // 50% advance
+            advanceRequired = BigDecimal.valueOf(50); // ₹50 advance
         } else if (request.getPaymentMethod().requiresPrepayment()) {
             advanceRequired = finalAmount;
         }
