@@ -46,6 +46,7 @@ import '../features/profile/presentation/screens/user_sessions_screen.dart';
 import '../features/profile/presentation/screens/theme_settings_screen.dart';
 import '../features/profile/presentation/screens/user_edit_profile_screen.dart';
 import '../features/user/presentation/screens/user_home_screen.dart';
+import '../features/reviews/presentation/screens/submit_review_screen.dart';
 import 'shell_screens.dart';
 
 part 'app_router.g.dart';
@@ -174,6 +175,19 @@ GoRouter appRouter(Ref ref) {
             name: 'tournamentDetail',
             builder: (_, state) =>
                 TournamentDetailScreen(tournamentId: state.pathParameters['id']!),
+          ),
+          GoRoute(
+            path: '/user/reviews/submit/:turfId',
+            name: 'submitReview',
+            builder: (_, state) {
+              final extra = state.extra as Map<String, dynamic>?;
+              return SubmitReviewScreen(
+                turfId: state.pathParameters['turfId']!,
+                turfName: extra?['turfName'] as String? ??
+                    state.uri.queryParameters['turfName'] ??
+                    'Turf',
+              );
+            },
           ),
           GoRoute(
             path: '/user/profile',

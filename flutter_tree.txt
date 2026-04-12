@@ -1,0 +1,291 @@
+﻿Folder PATH listing
+Volume serial number is D0B8-BAB8
+C:\USERS\MUBIN\DESKTOP\SOLAPUR-TURF-BOOKING-APP\SOLAPUR_TURF_APP\LIB
+ª   main.dart
+ª   
++---core
+ª   +---constants
+ª   ª       app_constants.dart
+ª   ª       
+ª   +---errors
+ª   ª       error_handler.dart
+ª   ª       exceptions.dart
+ª   ª       failures.dart
+ª   ª       failures.freezed.dart
+ª   ª       
+ª   +---network
+ª   ª       api_client.dart
+ª   ª       api_client.g.dart
+ª   ª       interceptors.dart
+ª   ª       token_storage.dart
+ª   ª       token_storage.g.dart
+ª   ª       
+ª   +---providers
+ª   +---services
+ª   ª       notification_service.dart
+ª   ª       
+ª   +---theme
+ª   ª       app_colors.dart
+ª   ª       app_theme.dart
+ª   ª       theme_provider.dart
+ª   ª       
+ª   +---usecases
+ª   ª       use_case.dart
+ª   ª       
+ª   +---utils
+ª   ª       debouncer.dart
+ª   ª       formatters.dart
+ª   ª       validators.dart
+ª   ª       
+ª   +---widgets
+ª           app_widgets.dart
+ª           
++---features
+ª   +---admin
+ª   ª   +---presentation
+ª   ª       +---providers
+ª   ª       ª       admin_providers.dart
+ª   ª       ª       
+ª   ª       +---screens
+ª   ª       ª       admin_audit_log_screen.dart
+ª   ª       ª       admin_bookings_screen.dart
+ª   ª       ª       admin_dashboard_screen.dart
+ª   ª       ª       admin_help_support_screen.dart
+ª   ª       ª       admin_owner_approvals_screen.dart
+ª   ª       ª       admin_platform_settings_screen.dart
+ª   ª       ª       admin_profile_screen.dart
+ª   ª       ª       admin_push_notification_screen.dart
+ª   ª       ª       admin_revenue_analytics_screen.dart
+ª   ª       ª       admin_tournaments_screen.dart
+ª   ª       ª       admin_turf_management_screen.dart
+ª   ª       ª       admin_user_management_screen.dart
+ª   ª       ª       settlement_report_screen.dart
+ª   ª       ª       
+ª   ª       +---widgets
+ª   +---auth
+ª   ª   +---data
+ª   ª   ª   +---datasources
+ª   ª   ª   ª       auth_remote_datasource.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---models
+ª   ª   ª   ª       auth_model.dart
+ª   ª   ª   ª       auth_model.freezed.dart
+ª   ª   ª   ª       auth_model.g.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---repositories
+ª   ª   ª   ª       auth_repository_impl.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---services
+ª   ª   ª           forgot_password_api_service.dart
+ª   ª   ª           
+ª   ª   +---domain
+ª   ª   ª   +---entities
+ª   ª   ª   ª       user.dart
+ª   ª   ª   ª       user.freezed.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---repositories
+ª   ª   ª   ª       auth_repository.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---usecases
+ª   ª   +---presentation
+ª   ª       +---providers
+ª   ª       ª       auth_provider.dart
+ª   ª       ª       auth_provider.freezed.dart
+ª   ª       ª       auth_provider.g.dart
+ª   ª       ª       forgot_password_provider.dart
+ª   ª       ª       forgot_password_provider.g.dart
+ª   ª       ª       
+ª   ª       +---screens
+ª   ª       ª       auth_widgets.dart
+ª   ª       ª       forgot_password_email_screen.dart
+ª   ª       ª       forgot_password_otp_screen.dart
+ª   ª       ª       login_screen.dart
+ª   ª       ª       register_screen.dart
+ª   ª       ª       splash_screen.dart
+ª   ª       ª       
+ª   ª       +---widgets
+ª   +---booking
+ª   ª   +---data
+ª   ª   ª   +---datasources
+ª   ª   ª   ª       booking_remote_datasource.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---models
+ª   ª   ª   ª       booking_model.dart
+ª   ª   ª   ª       booking_model.freezed.dart
+ª   ª   ª   ª       booking_model.g.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---repositories
+ª   ª   ª           booking_repository_impl.dart
+ª   ª   ª           
+ª   ª   +---domain
+ª   ª   ª   +---entities
+ª   ª   ª   ª       booking.dart
+ª   ª   ª   ª       booking.freezed.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---repositories
+ª   ª   ª   ª       booking_repository.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---usecases
+ª   ª   +---presentation
+ª   ª       +---providers
+ª   ª       ª       booking_provider.dart
+ª   ª       ª       booking_provider.freezed.dart
+ª   ª       ª       booking_provider.g.dart
+ª   ª       ª       
+ª   ª       +---screens
+ª   ª       ª       booking_confirmation_screen.dart
+ª   ª       ª       booking_history_screen.dart
+ª   ª       ª       booking_screen.dart
+ª   ª       ª       
+ª   ª       +---widgets
+ª   +---owner
+ª   ª   +---domain
+ª   ª   ª   +---entities
+ª   ª   ª           dynamic_pricing_rule.dart
+ª   ª   ª           dynamic_pricing_rule.freezed.dart
+ª   ª   ª           dynamic_pricing_rule.g.dart
+ª   ª   ª           
+ª   ª   +---presentation
+ª   ª       +---providers
+ª   ª       ª       pricing_provider.dart
+ª   ª       ª       pricing_provider.g.dart
+ª   ª       ª       
+ª   ª       +---screens
+ª   ª       ª       owner_analytics_screen.dart
+ª   ª       ª       owner_bookings_screen.dart
+ª   ª       ª       owner_create_turf_screen.dart
+ª   ª       ª       owner_dashboard_screen.dart
+ª   ª       ª       owner_dynamic_pricing_screen.dart
+ª   ª       ª       owner_manage_turfs_screen.dart
+ª   ª       ª       owner_profile_screen.dart
+ª   ª       ª       owner_settlement_screen.dart
+ª   ª       ª       
+ª   ª       +---widgets
+ª   +---profile
+ª   ª   +---domain
+ª   ª   ª   +---entities
+ª   ª   ª           wallet_transaction.dart
+ª   ª   ª           wallet_transaction.freezed.dart
+ª   ª   ª           wallet_transaction.g.dart
+ª   ª   ª           
+ª   ª   +---presentation
+ª   ª       +---providers
+ª   ª       ª       profile_provider.dart
+ª   ª       ª       wallet_provider.dart
+ª   ª       ª       wallet_provider.g.dart
+ª   ª       ª       
+ª   ª       +---screens
+ª   ª               profile_screen.dart
+ª   ª               theme_settings_screen.dart
+ª   ª               user_edit_profile_screen.dart
+ª   ª               user_preferences_screen.dart
+ª   ª               user_sessions_screen.dart
+ª   ª               user_wallet_screen.dart
+ª   ª               
+ª   +---reviews
+ª   ª   +---domain
+ª   ª   ª   +---entities
+ª   ª   ª           review.dart
+ª   ª   ª           review.freezed.dart
+ª   ª   ª           review.g.dart
+ª   ª   ª           
+ª   ª   +---presentation
+ª   ª       +---providers
+ª   ª       ª       review_provider.dart
+ª   ª       ª       
+ª   ª       +---widgets
+ª   ª               review_list_widget.dart
+ª   ª               
+ª   +---teams
+ª   ª   +---data
+ª   ª   ª   +---datasources
+ª   ª   ª   +---models
+ª   ª   ª   +---repositories
+ª   ª   +---domain
+ª   ª   ª   +---entities
+ª   ª   ª   ª       team.dart
+ª   ª   ª   ª       team.freezed.dart
+ª   ª   ª   ª       team.g.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---repositories
+ª   ª   ª   +---usecases
+ª   ª   +---presentation
+ª   ª       +---providers
+ª   ª       ª       team_provider.dart
+ª   ª       ª       
+ª   ª       +---screens
+ª   ª       ª       create_team_screen.dart
+ª   ª       ª       join_team_screen.dart
+ª   ª       ª       my_teams_screen.dart
+ª   ª       ª       team_detail_screen.dart
+ª   ª       ª       
+ª   ª       +---widgets
+ª   +---tournaments
+ª   ª   +---data
+ª   ª   ª   +---datasources
+ª   ª   ª   +---models
+ª   ª   ª   +---repositories
+ª   ª   +---domain
+ª   ª   ª   +---entities
+ª   ª   ª   ª       tournament.dart
+ª   ª   ª   ª       tournament.freezed.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---repositories
+ª   ª   ª   +---usecases
+ª   ª   +---presentation
+ª   ª       +---providers
+ª   ª       ª       tournament_matches_provider.dart
+ª   ª       ª       tournament_matches_provider.g.dart
+ª   ª       ª       
+ª   ª       +---screens
+ª   ª       ª       create_tournament_screen.dart
+ª   ª       ª       tournament_detail_screen.dart
+ª   ª       ª       tournament_list_screen.dart
+ª   ª       ª       
+ª   ª       +---widgets
+ª   ª               bracket_match_card.dart
+ª   ª               tournament_bracket_view.dart
+ª   ª               update_score_modal.dart
+ª   ª               
+ª   +---turf
+ª   ª   +---data
+ª   ª   ª   +---datasources
+ª   ª   ª   ª       turf_remote_datasource.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---models
+ª   ª   ª   ª       turf_model.dart
+ª   ª   ª   ª       turf_model.freezed.dart
+ª   ª   ª   ª       turf_model.g.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---repositories
+ª   ª   ª           turf_repository_impl.dart
+ª   ª   ª           
+ª   ª   +---domain
+ª   ª   ª   +---entities
+ª   ª   ª   ª       turf_listing.dart
+ª   ª   ª   ª       turf_listing.freezed.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---repositories
+ª   ª   ª   ª       turf_repository.dart
+ª   ª   ª   ª       
+ª   ª   ª   +---usecases
+ª   ª   +---presentation
+ª   ª       +---providers
+ª   ª       ª       turf_provider.dart
+ª   ª       ª       turf_provider.g.dart
+ª   ª       ª       
+ª   ª       +---screens
+ª   ª       ª       turf_browse_screen.dart
+ª   ª       ª       turf_detail_screen.dart
+ª   ª       ª       
+ª   ª       +---widgets
+ª   +---user
+ª       +---presentation
+ª           +---screens
+ª                   user_home_screen.dart
+ª                   
++---router
+        app_router.dart
+        app_router.g.dart
+        shell_screens.dart
+        

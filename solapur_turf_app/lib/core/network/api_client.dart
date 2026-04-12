@@ -22,8 +22,6 @@ Dio _buildDio(TokenStorage storage) {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        // Required for ngrok tunnels
-        'ngrok-skip-browser-warning': 'true',
       },
     ),
   );

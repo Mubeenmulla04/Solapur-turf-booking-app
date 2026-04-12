@@ -71,6 +71,19 @@ public class TournamentController {
         return ResponseEntity.ok(ApiResponse.success(tournamentService.getMatches(UUID.fromString(id)), "Matches fetched"));
     }
 
+    @PostMapping("/{id}/register")
+    public ResponseEntity<ApiResponse<Object>> registerTeam(
+            @PathVariable String id,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody java.util.Map<String, String> body) {
+        UUID teamId = UUID.fromString(body.get("teamId"));
+        TournamentRegistrationRequest request = new TournamentRegistrationRequest();
+        request.setTournamentId(UUID.fromString(id));
+        request.setTeamId(teamId);
+        tournamentService.registerTeam(userDetails.getUser().getId(), request);
+        return ResponseEntity.ok(ApiResponse.success(null, "Team registered successfully"));
+    }
+
     @PostMapping("/{id}/matches/{matchId}/score")
     public ResponseEntity<ApiResponse<Object>> updateScore(
             @PathVariable String id,

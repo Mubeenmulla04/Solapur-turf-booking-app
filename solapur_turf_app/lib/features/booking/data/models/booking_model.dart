@@ -47,7 +47,7 @@ extension BookingModelX on BookingModel {
   Booking toDomain() => Booking(
         bookingId: bookingId,
         turfId: turfId,
-        turfName: (turf?['turf_name'] as String?) ?? 'Turf',
+        turfName: (turf?['turfName'] as String?) ?? (turf?['turf_name'] as String?) ?? 'Turf',
         bookingDate: bookingDate,
         startTime: startTime,
         endTime: endTime,

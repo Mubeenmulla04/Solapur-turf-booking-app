@@ -51,7 +51,7 @@ class SolapurTurfApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light, // 🔴 Forced strictly to Light Mode
+      themeMode: themeMode,
       routerConfig: router,
     );
   }

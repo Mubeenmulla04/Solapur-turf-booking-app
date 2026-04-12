@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 import '../providers/auth_provider.dart';
 import 'auth_widgets.dart';
@@ -81,7 +82,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.backgroundLight,
       body: Stack(
         children: [
           // ── Background ──────────────────────────────────────────────
@@ -113,7 +114,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 errorBuilder: (_, __, ___) => const Icon(
                                   Icons.sports_soccer_rounded,
                                   size: 48,
-                                  color: Color(0xFF10B981),
+                                  color: AppColors.success,
                                 ),
                               ),
                             ),
@@ -124,7 +125,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 fontSize: 18,
                                 letterSpacing: 2,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF0F172A),
+                                color: AppColors.textPrimaryLight,
                               )
                             ),
                             const Gap(4),
@@ -134,7 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 fontSize: 10,
                                 letterSpacing: 3,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF10B981),
+                                color: AppColors.success,
                               )
                             ),
                           ]),
@@ -150,14 +151,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             fontWeight: FontWeight.w900,
                             height: 1.2,
                             letterSpacing: -1,
-                            color: Color(0xFF0F172A),
+                            color: AppColors.textPrimaryLight,
                           ),
                           textAlign: TextAlign.center,
                         ),
                         const Gap(8),
                         const Text(
                           'Sign in to book pitches & manage your squad.',
-                          style: TextStyle(fontSize: 15, color: Color(0xFF64748B), height: 1.5),
+                          style: TextStyle(fontSize: 15, color: AppColors.textSecondaryLight, height: 1.5),
                           textAlign: TextAlign.center,
                         ),
                         const Gap(24),

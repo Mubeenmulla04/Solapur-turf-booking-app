@@ -24,7 +24,7 @@ public class TeamController {
     @GetMapping("/my-teams")
     public ResponseEntity<ApiResponse<List<TeamDto>>> getMyTeams(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        List<TeamDto> teams = teamService.getTeamsByCaptain(userDetails.getUser().getId());
+        List<TeamDto> teams = teamService.getMyTeams(userDetails.getUser().getId());
         return ResponseEntity.ok(ApiResponse.success(teams, "Teams fetched successfully"));
     }
 

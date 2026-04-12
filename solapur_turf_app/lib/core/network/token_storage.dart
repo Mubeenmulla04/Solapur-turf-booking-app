@@ -44,6 +44,12 @@ class TokenStorage {
   Future<String?> getUserRole() =>
       _storage.read(key: AppConstants.keyUserRole);
 
+  Future<String?> getUserId() =>
+      _storage.read(key: AppConstants.keyUserId);
+
+  Future<String?> getUserName() =>
+      _storage.read(key: AppConstants.keyUserName);
+
   Future<bool> hasValidToken() async {
     final token = await getAccessToken();
     return token != null && token.isNotEmpty;

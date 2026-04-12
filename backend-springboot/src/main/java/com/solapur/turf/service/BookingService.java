@@ -60,6 +60,7 @@ public class BookingService {
     private final DynamicPricingRuleRepository dynamicPricingRuleRepository;
     private final WalletService walletService;
     private final PaymentService paymentService;
+    private final SettlementService settlementService;
 
     // ─── Queries ─────────────────────────────────────────────────────────────
 
@@ -269,7 +270,23 @@ public class BookingService {
             userRepository.save(user);
         }
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+
+        // Trigger real-time settlement calculation for the booking's owner.
+        // This allows the settlement ledger to stay current rather than waiting
+        // for the next monthly @Scheduled run.
+        try {
+            LocalDate today = LocalDate.now();
+            settlementService.generateSettlementForOwner(
+                    booking.getTurf().getOwner(),
+                    today.withDayOfMonth(1),
+                    today);
+        } catch (Exception ex) {
+            // Non-fatal: log and continue — booking is already saved
+            System.err.println("[BookingService] Settlement trigger failed for booking " + saved.getId() + ": " + ex.getMessage());
+        }
+
+        return mapToDto(saved);
     }
 
     // ─── Cancel ──────────────────────────────────────────────────────────────

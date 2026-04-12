@@ -53,9 +53,12 @@ class _UpdateScoreModalState extends ConsumerState<UpdateScoreModal> {
     setState(() => _isSubmitting = true);
     
     try {
-      await ref.read(tournamentMatchesProvider(widget.tournamentId).notifier)
-          .updateMatchScore(widget.match.matchId, sA, sB);
-      if (mounted) Navigator.pop(context);
+      final success = await ref.read(matchScoreProvider(widget.tournamentId).notifier)
+          .updateScore(matchId: widget.match.matchId, scoreA: sA, scoreB: sB);
+      if (success && mounted) {
+        ref.invalidate(tournamentMatchesProvider(widget.tournamentId));
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

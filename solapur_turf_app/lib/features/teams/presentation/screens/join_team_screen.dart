@@ -3,11 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../providers/team_provider.dart';
 
 class JoinTeamScreen extends ConsumerStatefulWidget {
   const JoinTeamScreen({super.key});
@@ -32,11 +31,11 @@ class _JoinTeamScreenState extends ConsumerState<JoinTeamScreen> {
     HapticFeedback.lightImpact();
     setState(() => _isLoading = true);
     try {
-      await ref.read(apiClientProvider).post('/teams/join', data: {
-        'teamCode': _codeCtrl.text.trim().toUpperCase(),
-      });
-      if (mounted) {
+      final team = await ref.read(teamMutationProvider.notifier)
+          .joinTeam(_codeCtrl.text.trim().toUpperCase());
+      if (team != null && mounted) {
         HapticFeedback.heavyImpact();
+        ref.invalidate(myTeamsProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Joined squad successfully! 🎉'),
@@ -45,13 +44,12 @@ class _JoinTeamScreenState extends ConsumerState<JoinTeamScreen> {
           ),
         );
         context.go('/user/teams');
-      }
-    } on AppException catch (e) {
-      if (mounted) {
+      } else if (mounted) {
+        final errMsg = ref.read(teamMutationProvider).error?.toString() ?? 'Invalid team code';
         HapticFeedback.vibrate();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.message), 
+            content: Text(errMsg),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),

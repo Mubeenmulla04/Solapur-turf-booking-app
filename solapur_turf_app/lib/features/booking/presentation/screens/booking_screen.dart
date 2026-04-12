@@ -452,7 +452,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                         children: [
                           Text(
                             _paymentMethod == PaymentMethod.partialOnlineCash 
-                                ? 'Pay Now (₹50)' 
+                                ? 'Pay Now (${AppFormatters.formatCurrency(AppConstants.cashBookingAdvanceAmount)})' 
                                 : (_paymentMethod == PaymentMethod.cashOnBooking ? 'Pay at Venue' : 'Total Amount'),
                             style: const TextStyle(
                               fontSize: 12,
@@ -463,7 +463,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                           Text(
                             AppFormatters.formatCurrency(
                               _paymentMethod == PaymentMethod.partialOnlineCash
-                                  ? 50.0
+                                  ? AppConstants.cashBookingAdvanceAmount
                                   : (_paymentMethod == PaymentMethod.cashOnBooking ? 0.0 : _totalAmount),
                             ),
                             style: const TextStyle(
@@ -776,7 +776,7 @@ class _PaymentMethodSelector extends StatelessWidget {
       children: methods.map((pm) {
         final isSelected = selected == pm;
         final advanceAmount = pm == PaymentMethod.partialOnlineCash
-            ? 50.0
+            ? AppConstants.cashBookingAdvanceAmount
             : (pm == PaymentMethod.cashOnBooking ? 0.0 : totalAmount);
 
         return GestureDetector(

@@ -3,11 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
-import '../../../../core/errors/exceptions.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../providers/team_provider.dart';
 
 class CreateTeamScreen extends ConsumerStatefulWidget {
   const CreateTeamScreen({super.key});
@@ -38,14 +37,15 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
     setState(() => _isLoading = true);
     
     try {
-      await ref.read(apiClientProvider).post('/teams', data: {
-        'teamName': _nameCtrl.text.trim(),
-        'sportType': _sport,
-        'description': _descCtrl.text.trim(),
-        'homeCity': _cityCtrl.text.trim(),
-      });
-      if (mounted) {
+      final team = await ref.read(teamMutationProvider.notifier).createTeam(
+        teamName: _nameCtrl.text.trim(),
+        sportType: _sport,
+        description: _descCtrl.text.trim(),
+        homeCity: _cityCtrl.text.trim(),
+      );
+      if (team != null && mounted) {
         HapticFeedback.heavyImpact();
+        ref.invalidate(myTeamsProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Squad forged successfully! 🛡️'),
@@ -54,13 +54,12 @@ class _CreateTeamScreenState extends ConsumerState<CreateTeamScreen> {
           ),
         );
         context.go('/user/teams');
-      }
-    } on AppException catch (e) {
-      if (mounted) {
+      } else if (mounted) {
+        final errMsg = ref.read(teamMutationProvider).error?.toString() ?? 'Failed to create team';
         HapticFeedback.vibrate();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.message), 
+            content: Text(errMsg),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),

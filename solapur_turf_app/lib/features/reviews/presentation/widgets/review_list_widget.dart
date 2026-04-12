@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_widgets.dart';
@@ -7,7 +8,8 @@ import '../providers/review_provider.dart';
 
 class ReviewListWidget extends ConsumerWidget {
   final String turfId;
-  const ReviewListWidget({super.key, required this.turfId});
+  final String turfName;
+  const ReviewListWidget({super.key, required this.turfId, this.turfName = 'Turf'});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,9 +29,13 @@ class ReviewListWidget extends ConsumerWidget {
                 color: AppColors.textPrimaryLight,
               ),
             ),
-            TextButton(
-              onPressed: () => _showReviewSheet(context),
-              child: const Text('Write Review'),
+            TextButton.icon(
+              onPressed: () => context.push(
+                '/user/reviews/submit/$turfId',
+                extra: {'turfName': turfName},
+              ),
+              icon: const Icon(Icons.edit_rounded, size: 16),
+              label: const Text('Write Review'),
             ),
           ],
         ),

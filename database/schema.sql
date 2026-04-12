@@ -26,6 +26,7 @@ CREATE TABLE users (
     is_verified BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
     profile_image_url TEXT,
+    loyalty_points INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP WITH TIME ZONE
@@ -139,7 +140,14 @@ CREATE TABLE bookings (
     booking_code VARCHAR(20) UNIQUE NOT NULL, -- QR code identifier
     coupon_id UUID REFERENCES coupons(coupon_id),
     cancellation_reason TEXT,
+    cancellation_time TIMESTAMP WITH TIME ZONE,
     cancelled_at TIMESTAMP WITH TIME ZONE,
+    rescheduled_at TIMESTAMP WITH TIME ZONE,
+    reschedule_reason TEXT,
+    reschedule_notes TEXT,
+    old_date_time TIMESTAMP WITH TIME ZONE,
+    additional_amount DECIMAL(10, 2) DEFAULT 0.00,
+    refund_method VARCHAR(50),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

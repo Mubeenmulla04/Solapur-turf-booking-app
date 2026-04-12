@@ -55,7 +55,8 @@ class AuthNotifier extends _$AuthNotifier {
       // Restore role from secure storage
       final storage = ref.read(tokenStorageProvider);
       final role = await storage.getUserRole() ?? 'USER';
-      final userId = await storage.getAccessToken() ?? '';
+      final userId = await storage.getUserId() ?? '';
+      final userName = await storage.getUserName() ?? 'Player';
       
       // Update FCM token in background
       ref.read(notificationServiceProvider).updateFcmToken();
@@ -65,7 +66,7 @@ class AuthNotifier extends _$AuthNotifier {
         user: User(
           userId: userId,
           email: '',
-          fullName: '',
+          fullName: userName,
           role: UserRoleX.fromString(role),
         ),
       );

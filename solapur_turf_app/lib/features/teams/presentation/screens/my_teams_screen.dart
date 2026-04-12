@@ -3,41 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
-import 'package:dio/dio.dart';
-import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../domain/entities/team.dart';
+import '../providers/team_provider.dart';
 
-// ── Remote Data & Provider ──
-
-final _teamsProvider = FutureProvider.autoDispose<List<Team>>((ref) async {
-  final dio = ref.watch(apiClientProvider);
-  try {
-    final res = await dio.get('/teams/my-teams');
-    final list = (res.data is Map ? res.data['data'] : res.data) as List;
-    return list.map((j) => _mapTeam(j as Map<String, dynamic>)).toList();
-  } on DioException catch (e) {
-    throw AppException.fromDioException(e);
-  }
-});
-
-Team _mapTeam(Map<String, dynamic> j) => Team(
-      teamId: j['team_id'] as String? ?? j['teamId'] as String? ?? '',
-      teamName: j['team_name'] as String? ?? j['teamName'] as String? ?? '',
-      teamCode: j['team_code'] as String? ?? j['teamCode'] as String? ?? '',
-      sportType: j['sport_type'] as String? ?? j['sportType'] as String? ?? '',
-      description: j['description'] as String?,
-      logoUrl: j['logo_url'] as String?,
-      homeCity: j['home_city'] as String? ?? j['homeCity'] as String?,
-      memberCount: (j['member_count'] as int?) ??
-          (j['memberCount'] as int?) ??
-          (j['members'] as List?)?.length ??
-          0,
-    );
 
 class MyTeamsScreen extends ConsumerWidget {
   const MyTeamsScreen({super.key});
@@ -45,7 +17,7 @@ class MyTeamsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
-    final teamsAsync = ref.watch(_teamsProvider);
+    final teamsAsync = ref.watch(myTeamsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -94,7 +66,7 @@ class MyTeamsScreen extends ConsumerWidget {
             ),
             error: (e, _) => AppErrorWidget(
               message: e is Failure ? e.userMessage : e.toString(),
-              onRetry: () => ref.invalidate(_teamsProvider),
+              onRetry: () => ref.invalidate(myTeamsProvider),
             ),
             data: (teams) => teams.isEmpty
                 ? Center(
@@ -140,7 +112,7 @@ class MyTeamsScreen extends ConsumerWidget {
                     ),
                   )
                 : RefreshIndicator(
-                    onRefresh: () async => ref.invalidate(_teamsProvider),
+                    onRefresh: () async => ref.invalidate(myTeamsProvider),
                     color: AppColors.primary,
                     child: CustomScrollView(
                       slivers: [

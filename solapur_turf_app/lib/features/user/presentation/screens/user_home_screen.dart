@@ -14,6 +14,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../booking/domain/entities/booking.dart';
 import '../../../booking/presentation/providers/booking_provider.dart';
@@ -562,7 +563,7 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
               style: TextStyle(fontSize: 13, color: AppColors.textSecondaryLight),
             ),
             const Gap(24),
-            ...['Solapur', 'Pune', 'Mumbai', 'Bangalore'].map((city) => ListTile(
+            ...AppConstants.supportedCities.map((city) => ListTile(
               leading: const Icon(Icons.location_city_rounded, color: AppColors.primary),
               title: Text(city, style: const TextStyle(fontWeight: FontWeight.w600)),
               trailing: city == currentLocation ? const Icon(Icons.check_circle, color: AppColors.primary) : null,

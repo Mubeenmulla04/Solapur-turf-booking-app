@@ -8,10 +8,10 @@ enum BookingStatus { pending, confirmed, inProgress, completed, cancelled, noSho
 
 extension PaymentMethodX on PaymentMethod {
   String get apiValue => switch (this) {
-        PaymentMethod.fullOnline => 'ONLINE',
-        PaymentMethod.partialOnlineCash => 'CASH',
-        PaymentMethod.cashOnBooking => 'CASH',
-        PaymentMethod.wallet => 'ONLINE',
+        PaymentMethod.fullOnline => 'FULL_ONLINE',
+        PaymentMethod.partialOnlineCash => 'PARTIAL_ONLINE_CASH',
+        PaymentMethod.cashOnBooking => 'CASH_ON_BOOKING',
+        PaymentMethod.wallet => 'WALLET',
       };
 
   String get label => switch (this) {

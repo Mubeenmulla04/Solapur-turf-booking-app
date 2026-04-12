@@ -35,6 +35,7 @@ class AppConstants {
   static const double tournamentCommissionPerTeam = 50.0;
   static const int maxTeamMembers = 25;
   static const int teamCodeLength = 8;
+  static const List<String> supportedCities = ['Solapur', 'Pune', 'Mumbai', 'Bangalore'];
 
   // ── Pagination ─────────────────────────────────────────────────────────────
   static const int defaultPageSize = 10;

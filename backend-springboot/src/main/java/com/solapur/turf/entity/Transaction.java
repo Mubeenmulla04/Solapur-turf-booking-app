@@ -51,6 +51,6 @@ public class Transaction extends BaseEntity {
     @Builder.Default
     private TransactionStatus status = TransactionStatus.PENDING;
 
-    @Column(columnDefinition = "text")
+    @Column(name = "failure_reason", columnDefinition = "text")
     private String error;
 }

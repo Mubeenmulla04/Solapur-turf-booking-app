@@ -14,7 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -26,6 +29,27 @@ public class TeamService {
     private final UserRepository userRepository;
     private final TeamMemberRepository teamMemberRepository;
 
+    /** Returns all teams where the user is captain OR a member. */
+    public List<TeamDto> getMyTeams(UUID userId) {
+        // Teams where they are captain
+        List<Team> captainTeams = teamRepository.findByCaptainIdAndIsActiveTrue(userId);
+        // Teams where they are a member (non-captain)
+        List<Team> memberTeams = teamMemberRepository.findByUserId(userId)
+                .stream()
+                .map(TeamMember::getTeam)
+                .filter(Team::isActive)
+                .collect(Collectors.toList());
+
+        // Deduplicate (captain may also be in member table)
+        Map<UUID, Team> merged = new LinkedHashMap<>();
+        captainTeams.forEach(t -> merged.put(t.getId(), t));
+        memberTeams.forEach(t -> merged.put(t.getId(), t));
+
+        return new ArrayList<>(merged.values())
+                .stream().map(this::mapToDto).collect(Collectors.toList());
+    }
+
+    /** @deprecated Use {@link #getMyTeams(UUID)} instead */
     public List<TeamDto> getTeamsByCaptain(UUID captainId) {
         return teamRepository.findByCaptainIdAndIsActiveTrue(captainId)
                 .stream().map(this::mapToDto).collect(Collectors.toList());
