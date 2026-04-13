@@ -23,7 +23,10 @@ public class AdminController {
 
     private final AdminService adminService;
 
+    private final com.solapur.turf.service.TurfService turfService;
+
     // ── Platform Stats ────────────────────────────────────────────────────────
+
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPlatformStats() {
         return ResponseEntity.ok(ApiResponse.success(adminService.getPlatformStats(), "Stats retrieved"));
@@ -64,15 +67,17 @@ public class AdminController {
 
     // ── Turf Management ───────────────────────────────────────────────────────
     @GetMapping("/turfs")
-    public ResponseEntity<ApiResponse<List<com.solapur.turf.entity.TurfListing>>> getAllTurfs() {
-        return ResponseEntity.ok(ApiResponse.success(adminService.getAllTurfs(), "All turfs retrieved"));
+    public ResponseEntity<ApiResponse<List<com.solapur.turf.dto.TurfListingDto>>> getAllTurfs() {
+        List<com.solapur.turf.dto.TurfListingDto> dtos = adminService.getAllTurfs()
+            .stream().map(turfService::mapToDto).collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success(dtos, "All turfs retrieved"));
     }
 
     @PutMapping("/turfs/{turfId}/status")
-    public ResponseEntity<ApiResponse<com.solapur.turf.entity.TurfListing>> toggleTurfStatus(
+    public ResponseEntity<ApiResponse<com.solapur.turf.dto.TurfListingDto>> toggleTurfStatus(
             @PathVariable UUID turfId,
             @RequestParam boolean isActive) {
-        return ResponseEntity.ok(ApiResponse.success(adminService.toggleTurfStatus(turfId, isActive), "Turf status updated"));
+        return ResponseEntity.ok(ApiResponse.success(turfService.mapToDto(adminService.toggleTurfStatus(turfId, isActive)), "Turf status updated"));
     }
 
     // ── Owner Approval ────────────────────────────────────────────────────────

@@ -72,6 +72,8 @@ public class TurfService {
                 .imageUrls(turf.getImageUrls())
                 .openingTime(turf.getOpeningTime())
                 .closingTime(turf.getClosingTime())
+                .isActive(turf.isActive())
+                .isVerified(turf.isVerified())
                 .build();
     }
 

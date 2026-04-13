@@ -49,7 +49,7 @@ class AdminTurfManagementScreen extends ConsumerWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                title: Text(t['name'] ?? 'Turf', style: const TextStyle(fontWeight: FontWeight.bold)),
+                title: Text(t['turfName'] ?? 'Turf', style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text('${t['city']}, ${t['sportType']}'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -66,7 +66,7 @@ class AdminTurfManagementScreen extends ConsumerWidget {
                       onChanged: (val) async {
                         try {
                           final dio = ref.read(apiClientProvider);
-                          await dio.put('/admin/turfs/${t['id']}/status', queryParameters: {'isActive': val});
+                          await dio.put('/admin/turfs/${t['turfId']}/status', queryParameters: {'isActive': val});
                           ref.invalidate(_adminTurfsProvider);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Turf ${val ? 'enabled' : 'disabled'}!')),

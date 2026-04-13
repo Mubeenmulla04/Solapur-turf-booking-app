@@ -37,4 +37,6 @@ public class TurfListingDto {
     private List<String> imageUrls;
     private LocalTime openingTime;
     private LocalTime closingTime;
+    private boolean isActive;
+    private boolean isVerified;
 }

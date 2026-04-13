@@ -347,14 +347,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex,
             HttpServletRequest request) {
-        // Log the full stack trace for debugging — without this you'll never know what
-        // broke
         log.error("Unhandled exception at {}: {} - {}", request.getRequestURI(), ex.getClass().getName(), ex.getMessage(), ex);
-
+        String debugMessage = "Ex: " + ex.getClass().getSimpleName() + " - " + ex.getMessage();
+        if (ex.getCause() != null) {
+            debugMessage += " || Cause: " + ex.getCause().getClass().getSimpleName() + " - " + ex.getCause().getMessage();
+        }
         return build(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal Server Error",
-                "An unexpected error occurred. Please try again later.",
+                debugMessage,
                 request);
     }
 }
