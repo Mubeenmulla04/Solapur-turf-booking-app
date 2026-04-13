@@ -186,8 +186,8 @@ class OwnerDashboardScreen extends ConsumerWidget {
                               icon: Icons.stadium_rounded,
                               title: 'Manage Turfs',
                               subtitle: 'View, update, or remove your listed turfs',
-                              iconBg: AppColors.success.withOpacity(0.1),
-                              iconColor: AppColors.success,
+                              iconBg: AppColors.primaryContainer,
+                              iconColor: AppColors.primary,
                               onTap: () => context.go('/owner/turfs'),
                             ),
                             const Divider(height: 1, indent: 64),
@@ -204,8 +204,8 @@ class OwnerDashboardScreen extends ConsumerWidget {
                               icon: Icons.edit_calendar_outlined,
                               title: 'Dynamic Pricing',
                               subtitle: 'Adjust slot rates and freeze maintenance times',
-                              iconBg: AppColors.warning.withOpacity(0.1),
-                              iconColor: AppColors.warning,
+                              iconBg: AppColors.secondaryContainer,
+                              iconColor: AppColors.secondary,
                               onTap: () {
                                 final turfId = statsAsync.valueOrNull?['turfId'];
                                 if (turfId != null) {
@@ -228,7 +228,7 @@ class OwnerDashboardScreen extends ConsumerWidget {
                               title: 'Revenue Analytics',
                               subtitle: 'Top slots, sport breakdown & traffic heatmap',
                               iconBg: AppColors.primaryContainer,
-                              iconColor: AppColors.primaryDark,
+                              iconColor: AppColors.primary,
                               onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -241,8 +241,8 @@ class OwnerDashboardScreen extends ConsumerWidget {
                               icon: Icons.account_balance_rounded,
                               title: 'Payout Settlements',
                               subtitle: 'View pending & processed payout history',
-                              iconBg: AppColors.success.withOpacity(0.1),
-                              iconColor: AppColors.success,
+                              iconBg: AppColors.primaryContainer,
+                              iconColor: AppColors.primary,
                               onTap: () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -267,12 +267,11 @@ class OwnerDashboardScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.primary,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0F172A).withOpacity(0.04),
+                          color: AppColors.primary.withOpacity(0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         )
@@ -295,39 +294,38 @@ class OwnerDashboardScreen extends ConsumerWidget {
                                   Container(
                                     padding: const EdgeInsets.all(14),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF0EA5E9).withOpacity(0.1),
+                                      color: Colors.white.withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: const Color(0xFF0EA5E9).withOpacity(0.15)),
                                     ),
-                                    child: const Icon(Icons.stadium_rounded, color: Color(0xFF0284C7), size: 32),
+                                    child: const Icon(Icons.stadium_rounded, color: Colors.white, size: 32),
                                   ),
                                   const Spacer(),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
+                                      color: Colors.white.withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: const Text('GROW', style: TextStyle(color: Color(0xFF475569), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
+                                    child: const Text('GROW', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
                                   ),
                                 ],
                               ),
                               const Gap(20),
-                              const Text('List New Turf', style: TextStyle(color: Color(0xFF0F172A), fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                              const Text('List New Turf', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
                               const Gap(8),
                               const Text(
                                 'Expand your business footprint. Register a new playground to the platform and start accepting bookings instantly.',
-                                style: TextStyle(color: Color(0xFF64748B), fontSize: 14, height: 1.5, fontWeight: FontWeight.w500),
+                                style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.5, fontWeight: FontWeight.w500),
                               ),
                               const Gap(24),
                               Row(
                                 children: [
-                                  const Text('Register Property', style: TextStyle(color: Color(0xFF0EA5E9), fontWeight: FontWeight.w800, fontSize: 15)),
+                                  const Text('Register Property', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
                                   const Gap(8),
                                   Container(
                                     padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(color: const Color(0xFF0EA5E9).withOpacity(0.1), shape: BoxShape.circle),
-                                    child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF0EA5E9), size: 16),
+                                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                                    child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
                                   ),
                                 ],
                               ),
@@ -348,12 +346,12 @@ class OwnerDashboardScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surfaceLight,
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                      border: Border.all(color: AppColors.dividerLight, width: 1.5),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0F172A).withOpacity(0.04),
+                          color: AppColors.shadowLight,
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         )
@@ -376,39 +374,38 @@ class OwnerDashboardScreen extends ConsumerWidget {
                                   Container(
                                     padding: const EdgeInsets.all(14),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF59E0B).withOpacity(0.1),
+                                      color: AppColors.secondaryContainer,
                                       borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.15)),
                                     ),
-                                    child: const Icon(Icons.emoji_events_rounded, color: Color(0xFFD97706), size: 32),
+                                    child: const Icon(Icons.emoji_events_rounded, color: AppColors.secondary, size: 32),
                                   ),
                                   const Spacer(),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
+                                      color: AppColors.surfaceVariantLight,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: const Text('NEW', style: TextStyle(color: Color(0xFF475569), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
+                                    child: const Text('NEW', style: TextStyle(color: AppColors.textSecondaryLight, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
                                   ),
                                 ],
                               ),
                               const Gap(20),
-                              const Text('Host a Tournament', style: TextStyle(color: Color(0xFF0F172A), fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
+                              const Text('Host a Tournament', style: TextStyle(color: AppColors.textPrimaryLight, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5)),
                               const Gap(8),
                               const Text(
                                 'Create massive scale events, block out your turf, and dramatically boost your weekend revenue.',
-                                style: TextStyle(color: Color(0xFF64748B), fontSize: 14, height: 1.5, fontWeight: FontWeight.w500),
+                                style: TextStyle(color: AppColors.textSecondaryLight, fontSize: 14, height: 1.5, fontWeight: FontWeight.w500),
                               ),
                               const Gap(24),
                               Row(
                                 children: [
-                                  const Text('Create Event', style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.w800, fontSize: 15)),
+                                  const Text('Create Event', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800, fontSize: 15)),
                                   const Gap(8),
                                   Container(
                                     padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.1), shape: BoxShape.circle),
-                                    child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF10B981), size: 16),
+                                    decoration: BoxDecoration(color: AppColors.primaryContainer, shape: BoxShape.circle),
+                                    child: const Icon(Icons.arrow_forward_rounded, color: AppColors.primary, size: 16),
                                   ),
                                 ],
                               ),

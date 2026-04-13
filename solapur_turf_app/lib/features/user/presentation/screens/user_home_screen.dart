@@ -335,8 +335,8 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
                             child: _QuickActionCard(
                               icon: Icons.account_balance_wallet_rounded,
                               label: 'Wallet',
-                              color: const Color(0xFFE8F5E9),
-                              iconColor: const Color(0xFF2E7D32),
+                              color: AppColors.primaryContainer,
+                              iconColor: AppColors.primary,
                               onTap: () => context.go('/user/wallet'),
                             ),
                           ),
@@ -345,8 +345,8 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
                             child: _QuickActionCard(
                               icon: Icons.receipt_long_rounded,
                               label: 'Bookings',
-                              color: const Color(0xFFE3F2FD),
-                              iconColor: const Color(0xFF1565C0),
+                              color: AppColors.primaryContainer,
+                              iconColor: AppColors.primary,
                               onTap: () => context.go('/user/bookings'),
                             ),
                           ),
@@ -355,8 +355,8 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
                             child: _QuickActionCard(
                               icon: Icons.groups_rounded,
                               label: 'Squads',
-                              color: const Color(0xFFFFF3E0),
-                              iconColor: const Color(0xFFE65100),
+                              color: AppColors.secondaryContainer,
+                              iconColor: AppColors.secondary,
                               onTap: () {
                                 HapticFeedback.lightImpact();
                                 _showSquadOptions(context);
@@ -368,8 +368,8 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
                             child: _QuickActionCard(
                               icon: Icons.emoji_events_rounded,
                               label: 'Tourneys',
-                              color: const Color(0xFFF3E5F5),
-                              iconColor: const Color(0xFF6A1B9A),
+                              color: AppColors.primaryContainer,
+                              iconColor: AppColors.primary,
                               onTap: () => context.go('/user/tournaments'),
                             ),
                           ),
@@ -808,8 +808,8 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
             ListTile(
               leading: Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.add_circle_outline, color: Color(0xFF2E7D32)),
+                decoration: BoxDecoration(color: AppColors.primaryContainer, borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.add_circle_outline, color: AppColors.primary),
               ),
               title: const Text('Create Squad', style: TextStyle(fontWeight: FontWeight.bold)),
               subtitle: const Text('Form a new team and invite your friends'),
@@ -822,8 +822,8 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
             ListTile(
               leading: Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: const Color(0xFFE3F2FD), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.group_add_rounded, color: Color(0xFF1565C0)),
+                decoration: BoxDecoration(color: AppColors.primaryContainer, borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.group_add_rounded, color: AppColors.primary),
               ),
               title: const Text('Join Squad', style: TextStyle(fontWeight: FontWeight.bold)),
               subtitle: const Text('Use a team code to join an existing squad'),
@@ -836,8 +836,8 @@ class _UserHomeScreenState extends ConsumerState<UserHomeScreen> {
             ListTile(
               leading: Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: const Color(0xFFFFF3E0), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.groups_rounded, color: Color(0xFFE65100)),
+                decoration: BoxDecoration(color: AppColors.secondaryContainer, borderRadius: BorderRadius.circular(12)),
+                child: const Icon(Icons.groups_rounded, color: AppColors.secondary),
               ),
               title: const Text('My Squads', style: TextStyle(fontWeight: FontWeight.bold)),
               subtitle: const Text('View and manage your current teams'),
