@@ -11,8 +11,8 @@ final _adminTurfsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>
   final dio = ref.watch(apiClientProvider);
   try {
     final res = await dio.get('/admin/turfs');
-    final list = res.data is Map ? res.data['data'] as List : [];
-    return list.cast<Map<String, dynamic>>();
+    final list = res.data is Map ? (res.data['data'] as List?) ?? [] : [];
+    return List<Map<String, dynamic>>.from(list);
   } on DioException catch (e) {
     throw Exception(e.message);
   }
