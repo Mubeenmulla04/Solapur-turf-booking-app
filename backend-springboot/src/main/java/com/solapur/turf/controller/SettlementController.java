@@ -9,6 +9,7 @@ import com.solapur.turf.security.CustomUserDetails;
 import com.solapur.turf.service.SettlementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +27,7 @@ public class SettlementController {
 
     /** Admin: view all pending settlements for processing */
     @GetMapping("/pending")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<SettlementDto>>> getPendingSettlements() {
         List<SettlementDto> settlements = settlementService.getPendingSettlements();
         return ResponseEntity.ok(ApiResponse.success(settlements, "Pending settlements fetched successfully"));
@@ -48,6 +50,7 @@ public class SettlementController {
 
     /** Admin: mark a pending settlement as processed */
     @PostMapping("/{id}/mark-processed")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Object>> markAsProcessed(
             @PathVariable UUID id,
             @RequestBody Map<String, String> data) {

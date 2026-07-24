@@ -6,6 +6,7 @@ import com.solapur.turf.enums.SportType;
 import com.solapur.turf.security.CustomUserDetails;
 import com.solapur.turf.service.FileStorageService;
 import com.solapur.turf.service.TurfService;
+import com.solapur.turf.util.FileUploadValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,12 +27,25 @@ public class TurfController {
 
     private final TurfService turfService;
     private final FileStorageService fileStorageService;
+    private final FileUploadValidator fileUploadValidator;
 
     // ── Public read endpoints ─────────────────────────────────────────────────
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<TurfListingDto>>> getAllTurfs() {
-        return ResponseEntity.ok(ApiResponse.success(turfService.getAllActiveTurfs(), "Turfs retrieved successfully"));
+    public ResponseEntity<ApiResponse<List<TurfListingDto>>> getAllTurfs(
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String sportType,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(required = false) Double userLat,
+            @RequestParam(required = false) Double userLng) {
+        
+        List<TurfListingDto> turfs = turfService.getFilteredTurfs(city, sportType, search, minPrice, maxPrice, sortBy, page, limit, userLat, userLng);
+        return ResponseEntity.ok(ApiResponse.success(turfs, "Turfs retrieved successfully"));
     }
 
     @GetMapping("/{id}")
@@ -61,11 +75,18 @@ public class TurfController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam("images") List<MultipartFile> images) {
         
-        // This validates owner and turf
+        // Validate ownership
         turfService.getTurfByIdAndOwnerId(id, userDetails.getUser().getId());
+
+        // Max 10 images per upload request
+        if (images.size() > 10) {
+            throw new com.solapur.turf.exception.InvalidRequestException("Maximum 10 images allowed per upload");
+        }
 
         List<String> imageUrls = new ArrayList<>();
         for (MultipartFile file : images) {
+            // Validate each file before storing (magic byte check via Tika)
+            fileUploadValidator.validateImageUpload(file);
             String url = fileStorageService.storeFile(file, "turfs/" + id.toString());
             imageUrls.add(url);
         }

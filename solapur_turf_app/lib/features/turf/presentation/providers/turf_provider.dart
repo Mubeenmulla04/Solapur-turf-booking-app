@@ -33,6 +33,8 @@ class TurfFilterState {
   final double? minPrice;
   final double? maxPrice;
   final String sortBy;
+  final double? latitude;
+  final double? longitude;
 
   const TurfFilterState({
     this.search,
@@ -41,6 +43,8 @@ class TurfFilterState {
     this.minPrice,
     this.maxPrice,
     this.sortBy = 'NEWEST',
+    this.latitude,
+    this.longitude,
   });
 
   TurfFilterState copyWith({
@@ -53,6 +57,9 @@ class TurfFilterState {
     double? minPrice,
     double? maxPrice,
     String? sortBy,
+    double? latitude,
+    double? longitude,
+    bool clearLocation = false,
   }) =>
       TurfFilterState(
         search: clearSearch ? null : (search ?? this.search),
@@ -61,6 +68,8 @@ class TurfFilterState {
         minPrice: minPrice ?? this.minPrice,
         maxPrice: maxPrice ?? this.maxPrice,
         sortBy: sortBy ?? this.sortBy,
+        latitude: clearLocation ? null : (latitude ?? this.latitude),
+        longitude: clearLocation ? null : (longitude ?? this.longitude),
       );
 }
 
@@ -77,6 +86,8 @@ Future<List<TurfListing>> turfs(Ref ref) async {
     minPrice: filter.minPrice,
     maxPrice: filter.maxPrice,
     sortBy: filter.sortBy == 'NEWEST' ? null : filter.sortBy,
+    userLat: filter.latitude,
+    userLng: filter.longitude,
   );
   return result.fold((f) => throw f, (data) => data);
 }

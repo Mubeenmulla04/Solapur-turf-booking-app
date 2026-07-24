@@ -22,6 +22,7 @@ class AuthState with _$AuthState {
   const factory AuthState.loading() = _Loading;
   const factory AuthState.authenticated({required User user}) = _Authenticated;
   const factory AuthState.unauthenticated() = _Unauthenticated;
+  const factory AuthState.pendingApproval({required User user}) = _PendingApproval;
   const factory AuthState.error({required String message}) = _Error;
 }
 
@@ -133,15 +134,26 @@ class AuthNotifier extends _$AuthNotifier {
       (failure) => state =
           AsyncValue.data(AuthState.error(message: failure.userMessage)),
       (response) {
-        // Owner accounts get null token — pending admin approval
-        // Still emit authenticated so UI can detect the owner role and show pending dialog
-        state = AsyncValue.data(AuthState.authenticated(user: response.user));
+        if (role == 'OWNER') {
+          // OWNER accounts have no token — pending admin approval.
+          // Emit pendingApproval (NOT authenticated) so GoRouter never
+          // auto-redirects to /owner/dashboard.
+          state = AsyncValue.data(AuthState.pendingApproval(user: response.user));
+        } else {
+          state = AsyncValue.data(AuthState.authenticated(user: response.user));
+        }
       },
     );
   }
 
   Future<void> logout() async {
     await ref.read(authRepositoryProvider).clearSession();
+    state = const AsyncValue.data(AuthState.unauthenticated());
+  }
+
+  /// Instantly resets state to unauthenticated without any API call.
+  /// Safe to call for pending owners who have no access token.
+  void resetToUnauthenticated() {
     state = const AsyncValue.data(AuthState.unauthenticated());
   }
 }

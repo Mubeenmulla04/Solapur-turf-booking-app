@@ -24,8 +24,10 @@ import com.solapur.turf.exception.ResourceNotFoundException;
 import com.solapur.turf.repository.BookingRepository;
 import com.solapur.turf.repository.TurfListingRepository;
 import com.solapur.turf.repository.TurfOwnerRepository;
+import com.solapur.turf.repository.PlatformSettingsRepository;
 import com.solapur.turf.repository.UserRepository;
 import com.solapur.turf.repository.UserWalletRepository;
+import com.solapur.turf.entity.PlatformSettings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -61,6 +63,8 @@ public class BookingService {
     private final WalletService walletService;
     private final PaymentService paymentService;
     private final SettlementService settlementService;
+    private final EmailService emailService;
+    private final PlatformSettingsRepository settingsRepository;
 
     // ─── Queries ─────────────────────────────────────────────────────────────
 
@@ -108,6 +112,10 @@ public class BookingService {
         TurfListing turf = turfListingRepository.findById(request.getTurfId())
                 .orElseThrow(() -> new ResourceNotFoundException("Turf", "id", request.getTurfId()));
 
+        if (turf.getOwner() != null && !isOwnerSubscriptionValid(turf.getOwner())) {
+            throw new InvalidRequestException("This turf is currently unavailable for bookings due to owner subscription expiration.");
+        }
+
         // Reject past dates/times
         LocalDate today = LocalDate.now();
         if (request.getBookingDate().isBefore(today)) {
@@ -116,6 +124,31 @@ public class BookingService {
         if (request.getBookingDate().isEqual(today)
                 && request.getStartTime().isBefore(LocalTime.now())) {
             throw new InvalidRequestException("Cannot book a time slot that has already passed");
+        }
+
+        // Validate booking time must be within turf opening/closing hours
+        LocalTime opening = turf.getOpeningTime();
+        LocalTime closing = turf.getClosingTime();
+        if (opening != null && closing != null) {
+            boolean isWithinHours;
+            if (opening.isBefore(closing)) {
+                isWithinHours = !request.getStartTime().isBefore(opening) && !request.getEndTime().isAfter(closing);
+            } else { // Overnight turf operating hours
+                isWithinHours = (!request.getStartTime().isBefore(opening) || !request.getStartTime().isAfter(closing))
+                        && (!request.getEndTime().isBefore(opening) || !request.getEndTime().isAfter(closing));
+            }
+            if (!isWithinHours) {
+                throw new InvalidRequestException("Booking time must be within turf operating hours: " + opening + " to " + closing);
+            }
+        }
+
+        // Enforce max booking window (from PlatformSettings)
+        PlatformSettings settings = settingsRepository.getSettings();
+        int maxDays = (settings != null && settings.getMaximumAdvanceBookingDays() != null) 
+                ? settings.getMaximumAdvanceBookingDays() : 30;
+        LocalDate maxBookingDate = LocalDate.now().plusDays(maxDays);
+        if (request.getBookingDate().isAfter(maxBookingDate)) {
+            throw new InvalidRequestException("Cannot book more than " + maxDays + " days in advance");
         }
 
         // ── Pessimistic DB lock ───────────────────────────────────────────────
@@ -161,7 +194,8 @@ public class BookingService {
         // ── Payment status assignment ──────────────────────────────────────────
         BigDecimal advanceRequired = BigDecimal.ZERO;
         if (request.getPaymentMethod() == com.solapur.turf.enums.PaymentMethod.PARTIAL_ONLINE_CASH) {
-            advanceRequired = BigDecimal.valueOf(50); // ₹50 advance
+            advanceRequired = (settings != null && settings.getPartialAdvanceAmount() != null)
+                    ? settings.getPartialAdvanceAmount() : BigDecimal.valueOf(50);
         } else if (request.getPaymentMethod().requiresPrepayment()) {
             advanceRequired = finalAmount;
         }
@@ -193,6 +227,23 @@ public class BookingService {
 
         Booking saved = bookingRepository.save(booking);
         BookingDto dto = mapToDto(saved);
+
+        if (saved.getBookingStatus() == BookingStatus.CONFIRMED) {
+            try {
+                emailService.sendBookingConfirmation(
+                    saved.getUser().getEmail(),
+                    saved.getUser().getFullName(),
+                    saved.getTurf().getName(),
+                    saved.getBookingDate().toString(),
+                    saved.getStartTime().toString(),
+                    saved.getEndTime().toString(),
+                    saved.getId().toString(),
+                    saved.getFinalAmount() != null ? saved.getFinalAmount().doubleValue() : 0
+                );
+            } catch (Exception e) {
+                // Non-blocking log/ignore
+            }
+        }
 
         // ── Razorpay order generation ──────────────────────────────────────────
         boolean needsPaymentOrder = (request.getPaymentMethod() == com.solapur.turf.enums.PaymentMethod.ONLINE 
@@ -238,7 +289,22 @@ public class BookingService {
         }
 
         booking.setBookingStatus(BookingStatus.CONFIRMED);
-        return mapToDto(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+        try {
+            emailService.sendBookingConfirmation(
+                saved.getUser().getEmail(),
+                saved.getUser().getFullName(),
+                saved.getTurf().getName(),
+                saved.getBookingDate().toString(),
+                saved.getStartTime().toString(),
+                saved.getEndTime().toString(),
+                saved.getId().toString(),
+                saved.getFinalAmount() != null ? saved.getFinalAmount().doubleValue() : 0
+            );
+        } catch (Exception e) {
+            // ignore
+        }
+        return mapToDto(saved);
     }
 
     /** Owner/system marks an on-going booking as COMPLETED. */
@@ -289,6 +355,36 @@ public class BookingService {
         return mapToDto(saved);
     }
 
+    @Transactional
+    public BookingDto collectPayment(UUID bookingId, UUID ownerUserId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking", "id", bookingId));
+
+        if (!booking.getTurf().getOwner().getUser().getId().equals(ownerUserId)) {
+            throw new InvalidRequestException("You do not own this turf");
+        }
+
+        if (booking.getPaymentStatus() == PaymentStatus.PAID || booking.getPaymentStatus() == PaymentStatus.COMPLETED) {
+            throw new InvalidRequestException("Payment is already fully collected");
+        }
+
+        booking.setPaymentStatus(PaymentStatus.PAID);
+        Booking saved = bookingRepository.save(booking);
+
+        // Trigger real-time settlement calculation for the booking's owner
+        try {
+            LocalDate today = LocalDate.now();
+            settlementService.generateSettlementForOwner(
+                    booking.getTurf().getOwner(),
+                    today.withDayOfMonth(1),
+                    today);
+        } catch (Exception ex) {
+            System.err.println("[BookingService] Settlement trigger failed for collected booking " + saved.getId() + ": " + ex.getMessage());
+        }
+
+        return mapToDto(saved);
+    }
+
     // ─── Cancel ──────────────────────────────────────────────────────────────
 
     @Transactional
@@ -311,7 +407,19 @@ public class BookingService {
         booking.setRefundAmount(refundAmount);
         booking.setRefundMethod(request.getRefundMethod());
 
-        return mapToDto(bookingRepository.save(booking));
+        Booking saved = bookingRepository.save(booking);
+        try {
+            emailService.sendBookingCancellation(
+                saved.getUser().getEmail(),
+                saved.getUser().getFullName(),
+                saved.getTurf().getName(),
+                saved.getBookingDate().toString(),
+                request.getReason() != null && !request.getReason().isBlank() ? request.getReason() : "Cancelled by owner/user"
+            );
+        } catch (Exception e) {
+            // ignore
+        }
+        return mapToDto(saved);
     }
 
     public Map<String, Object> getCancellationPolicy(UUID bookingId) {
@@ -469,6 +577,19 @@ public class BookingService {
     }
 
     // ─── Private helpers ──────────────────────────────────────────────────────
+
+    private boolean isOwnerSubscriptionValid(TurfOwner owner) {
+        if (owner == null) return false;
+        if (!owner.isActive()) return false;
+        String status = owner.getSubscriptionStatus();
+        if (status == null || "TRIAL".equalsIgnoreCase(status)) {
+            return owner.getTrialEndsAt() != null && java.time.LocalDateTime.now().isBefore(owner.getTrialEndsAt());
+        }
+        if ("ACTIVE".equalsIgnoreCase(status)) {
+            return owner.getSubscriptionExpiresAt() != null && java.time.LocalDateTime.now().isBefore(owner.getSubscriptionExpiresAt());
+        }
+        return false;
+    }
 
     private void validateCancellationPermission(Booking booking, UUID userId) {
         if (booking.getUser().getId().equals(userId)) return;

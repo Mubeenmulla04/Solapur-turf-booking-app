@@ -324,31 +324,10 @@ class _EditProfileTab extends StatelessWidget {
     );
   }
 
-  InputDecoration _fieldDeco(
-      {required String hint, required IconData icon}) {
+  InputDecoration _fieldDeco({required String hint, required IconData icon}) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: Icon(icon,
-          color: AppColors.textSecondaryLight, size: 20),
-      filled: true,
-      fillColor: AppColors.surfaceLight,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide:
-            const BorderSide(color: AppColors.dividerLight),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide:
-            const BorderSide(color: AppColors.dividerLight),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide:
-            const BorderSide(color: AppColors.primary, width: 1.5),
-      ),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
     );
   }
 }
@@ -543,7 +522,7 @@ class _ChangePasswordTab extends StatelessWidget {
     return InputDecoration(
       hintText: hint,
       prefixIcon: const Icon(Icons.lock_outline_rounded,
-          color: AppColors.textSecondaryLight, size: 20),
+          color: AppColors.primary, size: 20),
       suffixIcon: IconButton(
         icon: Icon(
           visible
@@ -554,35 +533,6 @@ class _ChangePasswordTab extends StatelessWidget {
         ),
         onPressed: onToggle,
       ),
-      filled: true,
-      fillColor: AppColors.surfaceLight,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide:
-            const BorderSide(color: AppColors.dividerLight),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide:
-            const BorderSide(color: AppColors.dividerLight),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide:
-            const BorderSide(color: AppColors.primary, width: 1.5),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide:
-            const BorderSide(color: AppColors.error, width: 1.5),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide:
-            const BorderSide(color: AppColors.error, width: 1.5),
-      ),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }
 }

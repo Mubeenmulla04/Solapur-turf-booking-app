@@ -2,7 +2,11 @@ package com.solapur.turf.config;
 
 import com.solapur.turf.security.JwtAuthenticationFilter;
 import com.solapur.turf.security.CustomUserDetailsService;
+import com.solapur.turf.security.RateLimitingFilter;
+import com.solapur.turf.security.RazorpayWebhookFilter;
+import com.solapur.turf.security.SecurityHeadersFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,6 +37,12 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitingFilter rateLimitingFilter;
+    private final SecurityHeadersFilter securityHeadersFilter;
+    private final RazorpayWebhookFilter razorpayWebhookFilter;
+    
+    @Value("${spring.web.cors.allowed-origins}")
+    private String allowedOrigins;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -67,6 +77,8 @@ public class SecurityConfig {
                 // ── Admin-only endpoints ──────────────────────────────────
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // ── Owner-only endpoints ──────────────────────────────────
+                .requestMatchers("/api/owners/**").hasRole("OWNER")
+                .requestMatchers("/api/owner/slots/**").hasRole("OWNER")
                 .requestMatchers(HttpMethod.POST,   "/api/turfs").hasRole("OWNER")
                 .requestMatchers(HttpMethod.PUT,    "/api/turfs/**").hasRole("OWNER")
                 .requestMatchers(HttpMethod.DELETE, "/api/turfs/**").hasRole("OWNER")
@@ -82,7 +94,10 @@ public class SecurityConfig {
                 // ── Catch-all ─────────────────────────────────────────────
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(securityHeadersFilter, RateLimitingFilter.class)
+            .addFilterBefore(razorpayWebhookFilter, SecurityHeadersFilter.class);
 
         return http.build();
     }
@@ -90,11 +105,30 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
+        
+        // Parse allowed origins from environment variable (comma-separated)
+        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        configuration.setAllowedOrigins(origins);
+        
+        // Allowed HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
+        
+        // Allowed headers
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization", 
+            "Content-Type", 
+            "Accept", 
+            "X-Requested-With",
+            "Cache-Control"
+        ));
+        
+        // Headers exposed to the client
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type"));
+        
+        // Allow credentials (cookies, authorization headers)
         configuration.setAllowCredentials(true);
+        
+        // Cache preflight requests for 1 hour
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -3,6 +3,7 @@ package com.solapur.turf.controller;
 import com.solapur.turf.dto.*;
 import com.solapur.turf.security.CustomUserDetails;
 import com.solapur.turf.service.PaymentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,20 +22,23 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping("/create-order")
-    public ResponseEntity<PaymentOrderResponse> createOrder(@RequestBody PaymentOrderRequest request,
+    public ResponseEntity<PaymentOrderResponse> createOrder(
+            @Valid @RequestBody PaymentOrderRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(paymentService.createOrder(request, userDetails.getUser().getId()));
     }
 
     @PostMapping("/verify")
-    public ResponseEntity<Map<String, Boolean>> verifyPayment(@RequestBody PaymentVerificationRequest request,
+    public ResponseEntity<Map<String, Boolean>> verifyPayment(
+            @Valid @RequestBody PaymentVerificationRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         boolean isValid = paymentService.verifySignature(request, userDetails.getUser().getId());
         return ResponseEntity.ok(Collections.singletonMap("success", isValid));
     }
 
     @PostMapping("/failure")
-    public ResponseEntity<Map<String, String>> handleFailure(@RequestBody PaymentFailureRequest request,
+    public ResponseEntity<Map<String, String>> handleFailure(
+            @Valid @RequestBody PaymentFailureRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         paymentService.handlePaymentFailure(request, userDetails.getUser().getId());
         return ResponseEntity.ok(Collections.singletonMap("status", "Handled"));
@@ -42,7 +46,8 @@ public class PaymentController {
 
     @PostMapping("/refund")
     @PreAuthorize("hasRole('ADMIN') or hasRole('OWNER')")
-    public ResponseEntity<Map<String, Boolean>> initiateRefund(@RequestBody PaymentRefundRequest request) {
+    public ResponseEntity<Map<String, Boolean>> initiateRefund(
+            @Valid @RequestBody PaymentRefundRequest request) {
         boolean success = paymentService.processRefund(request);
         return ResponseEntity.ok(Collections.singletonMap("success", success));
     }
@@ -50,11 +55,12 @@ public class PaymentController {
     @PostMapping("/refund-booking/{bookingId}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('OWNER')")
     public ResponseEntity<Map<String, Boolean>> initiateRefundByBooking(
-            @PathVariable UUID bookingId, 
-            @RequestBody PaymentRefundRequest request) {
+            @PathVariable UUID bookingId,
+            @Valid @RequestBody PaymentRefundRequest request) {
         boolean success = paymentService.processRefundByBookingId(bookingId, request.getAmount(), request.getReason());
         return ResponseEntity.ok(Collections.singletonMap("success", success));
     }
+
     @PostMapping("/webhook")
     public ResponseEntity<String> handleWebhook(
             @RequestBody String payload,

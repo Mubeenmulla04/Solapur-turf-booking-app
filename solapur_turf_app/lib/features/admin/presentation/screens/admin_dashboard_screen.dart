@@ -9,22 +9,45 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
-final _adminStatsProvider =
+final adminStatsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final dio = ref.watch(apiClientProvider);
   try {
-    final bookRes = await dio.get('/bookings', queryParameters: {'limit': 1});
-    final settRes = await dio.get('/settlement/pending', queryParameters: {'limit': 1});
+    final resList = await Future.wait([
+      dio.get('/admin/stats'),
+      dio.get('/settlement/pending', queryParameters: {'limit': 1}),
+      dio.get('/admin/revenue'),
+    ]);
 
-    final bookData = bookRes.data is Map && bookRes.data['data'] is Map ? bookRes.data['data'] as Map : null;
-    final settData = settRes.data is Map && settRes.data['data'] is List ? (settRes.data['data'] as List).length : 0;
+    final statsData = resList[0].data is Map && resList[0].data['data'] is Map 
+        ? resList[0].data['data'] as Map<String, dynamic> 
+        : <String, dynamic>{};
+    final settData = resList[1].data is Map && resList[1].data['data'] is List 
+        ? (resList[1].data['data'] as List).length 
+        : 0;
+    final revData = resList[2].data is Map && resList[2].data['data'] is Map
+        ? resList[2].data['data'] as Map<String, dynamic>
+        : <String, dynamic>{};
 
     return {
-      'totalBookings': bookData?['totalElements']?.toString() ?? '0',
+      'totalBookings': statsData['totalBookings']?.toString() ?? '0',
+      'totalRevenue': statsData['totalRevenue'] != null 
+          ? '₹${(double.tryParse(statsData['totalRevenue'].toString()) ?? 0).toStringAsFixed(0)}' 
+          : '₹0',
       'pendingSettlements': settData.toString(),
+      'pendingOwnerApprovals': statsData['pendingOwnerApprovals']?.toString() ?? '0',
+      'chartData': revData['chartData'] ?? [],
+      'averageMonthly': revData['averageMonthly']?.toString() ?? '0',
     };
   } on DioException {
-    return {'totalBookings': '0', 'pendingSettlements': '0'};
+    return {
+      'totalBookings': '0',
+      'totalRevenue': '₹0',
+      'pendingSettlements': '0',
+      'pendingOwnerApprovals': '0',
+      'chartData': [],
+      'averageMonthly': '0',
+    };
   }
 });
 
@@ -34,7 +57,7 @@ class AdminDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
-    final statsAsync = ref.watch(_adminStatsProvider);
+    final statsAsync = ref.watch(adminStatsProvider);
     final authState = ref.watch(authNotifierProvider);
     final adminName = authState.valueOrNull?.user?.fullName.split(' ').first ?? 'Admin';
 
@@ -42,7 +65,7 @@ class AdminDashboardScreen extends ConsumerWidget {
       backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () async => ref.invalidate(_adminStatsProvider),
+          onRefresh: () async => ref.invalidate(adminStatsProvider),
           color: AppColors.primary,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -173,10 +196,10 @@ class AdminDashboardScreen extends ConsumerWidget {
                             const SizedBox(height: 12),
                             Row(
                               children: [
-                                Expanded(
+                                 Expanded(
                                   child: _KpiCard(
                                     label: 'Active Revenue',
-                                    value: '₹0',
+                                    value: stats['totalRevenue'] ?? '₹0',
                                     icon: Icons.currency_rupee_rounded,
                                     color: AppColors.success,
                                     bg: AppColors.success.withOpacity(0.1),
@@ -196,12 +219,14 @@ class AdminDashboardScreen extends ConsumerWidget {
                                 ),
                               ],
                             ),
+                            const Gap(24),
+                            _RevenueChart(chartData: stats['chartData'] as List<dynamic>? ?? []),
                           ],
                         ),
                       ),
                       const Gap(32),
 
-                      // â”€â”€ System Modules â”€â”€
+                      // ── System Modules ──
                       const Text(
                         'SYSTEM MODULES',
                         style: TextStyle(
@@ -447,6 +472,153 @@ class _AdminActionTile extends StatelessWidget {
             const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _RevenueChart extends StatefulWidget {
+  final List<dynamic> chartData;
+
+  const _RevenueChart({required this.chartData});
+
+  @override
+  State<_RevenueChart> createState() => _RevenueChartState();
+}
+
+class _RevenueChartState extends State<_RevenueChart> {
+  int _selectedBarIndex = -1;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.chartData.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Find max value for scaling
+    double maxVal = 0.0;
+    for (var item in widget.chartData) {
+      final val = double.tryParse(item['revenue']?.toString() ?? '0') ?? 0.0;
+      if (val > maxVal) maxVal = val;
+    }
+    if (maxVal == 0.0) maxVal = 1.0;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.dividerLight),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'REVENUE ANALYTICS',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textSecondaryLight,
+                  letterSpacing: 1.1,
+                ),
+              ),
+              if (_selectedBarIndex != -1)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '₹${double.parse(widget.chartData[_selectedBarIndex]['revenue'].toString()).toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const Gap(24),
+          SizedBox(
+            height: 160,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: List.generate(widget.chartData.length, (index) {
+                final item = widget.chartData[index];
+                final revenue = double.tryParse(item['revenue']?.toString() ?? '0') ?? 0.0;
+                final percentage = revenue / maxVal;
+                final barHeight = percentage * 120.0; // Max height 120
+                final monthStr = item['month']?.toString() ?? '';
+                final shortMonth = monthStr.split(' ').first;
+                final isSelected = _selectedBarIndex == index;
+
+                return Expanded(
+                  child: GestureDetector(
+                    onTapDown: (_) => setState(() => _selectedBarIndex = index),
+                    onTapUp: (_) => setState(() => _selectedBarIndex = -1),
+                    onTapCancel: () => setState(() => _selectedBarIndex = -1),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: Align(
+                            alignment: Alignment.bottomCenter,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeOutCubic,
+                              width: 24,
+                              height: barHeight < 8 ? 8 : barHeight,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: isSelected
+                                      ? [AppColors.success, AppColors.success.withOpacity(0.7)]
+                                      : [AppColors.primary, AppColors.primary.withOpacity(0.6)],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                ),
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+                                boxShadow: [
+                                  if (isSelected)
+                                    BoxShadow(
+                                      color: AppColors.success.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const Gap(8),
+                        Text( shortMonth,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected ? AppColors.textPrimaryLight : AppColors.textSecondaryLight,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
       ),
     );
   }

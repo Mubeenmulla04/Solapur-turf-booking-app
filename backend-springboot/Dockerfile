@@ -15,4 +15,4 @@ COPY --from=build /app/target/solapur-turf-backend-*.jar app.jar
 EXPOSE 8080
 
 # Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseG1GC", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]

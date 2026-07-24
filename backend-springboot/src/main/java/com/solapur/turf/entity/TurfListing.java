@@ -122,4 +122,8 @@ public class TurfListing extends BaseEntity {
     @Column(name = "closing_time")
     @Builder.Default
     private LocalTime closingTime = LocalTime.of(23, 0);
+
+    @Column(name = "is_featured", nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean isFeatured = false;
 }

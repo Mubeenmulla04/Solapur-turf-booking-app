@@ -12,6 +12,7 @@ import '../../../../core/widgets/app_widgets.dart';
 import '../../../turf/domain/entities/turf_listing.dart';
 import '../../../turf/data/models/turf_model.dart';
 import 'owner_create_turf_screen.dart';
+import 'owner_dashboard_screen.dart';
 
 final myTurfsProvider = FutureProvider.autoDispose<List<TurfListing>>((ref) async {
   final dio = ref.watch(apiClientProvider);
@@ -178,6 +179,7 @@ class _ManageTurfCard extends ConsumerWidget {
                     try {
                       await ref.read(apiClientProvider).delete('/turfs/${turf.turfId}');
                       ref.invalidate(myTurfsProvider);
+                      ref.invalidate(ownerStatsProvider);
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Turf deleted successfully')));
                       }

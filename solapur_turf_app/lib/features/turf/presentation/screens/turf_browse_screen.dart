@@ -10,6 +10,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/turf_listing.dart';
 import '../providers/turf_provider.dart';
 import '../../../user/presentation/screens/user_home_screen.dart';
+import 'package:geolocator/geolocator.dart';
 
 class TurfBrowseScreen extends ConsumerStatefulWidget {
   const TurfBrowseScreen({super.key});
@@ -322,12 +323,17 @@ class _TurfCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.dividerLight),
-        boxShadow: const [
+        border: Border.all(
+          color: turf.isFeatured ? const Color(0xFFFFB300) : AppColors.dividerLight,
+          width: turf.isFeatured ? 1.5 : 1.0,
+        ),
+        boxShadow: [
           BoxShadow(
-            color: AppColors.shadowLight,
-            blurRadius: 20,
-            offset: Offset(0, 4),
+            color: turf.isFeatured
+                ? const Color(0xFFFFB300).withValues(alpha: 0.15)
+                : AppColors.shadowLight,
+            blurRadius: turf.isFeatured ? 24 : 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -339,20 +345,63 @@ class _TurfCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Beautiful Hero Image
+              // Beautiful Hero Image with optional Featured badge
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                child: imageUrl != null
-                    ? Image.network(
-                        imageUrl,
-                        height: 160,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _TurfImagePlaceholder(
-                          sport: turf.sportType.label,
+                child: Stack(
+                  children: [
+                    imageUrl != null
+                        ? Image.network(
+                            imageUrl,
+                            height: 160,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                                _TurfImagePlaceholder(sport: turf.sportType.label),
+                          )
+                        : _TurfImagePlaceholder(sport: turf.sportType.label),
+
+                    // ⭐ Featured Badge — only paid ACTIVE owners
+                    if (turf.isFeatured)
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFB300), Color(0xFFFF8C00)],
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFFB300).withValues(alpha: 0.5),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              )
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.workspace_premium_rounded,
+                                  size: 13, color: Colors.white),
+                              SizedBox(width: 4),
+                              Text(
+                                'FEATURED',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      )
-                    : _TurfImagePlaceholder(sport: turf.sportType.label),
+                      ),
+                  ],
+                ),
               ),
 
               // Card Meta Info
@@ -505,7 +554,7 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    const sorts = ['NEWEST', 'PRICE_ASC', 'PRICE_DESC', 'RATING_DESC'];
+    const sorts = ['NEWEST', 'PRICE_ASC', 'PRICE_DESC', 'RATING_DESC', 'NEAREST'];
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom + 24;
 
     return Container(
@@ -573,14 +622,65 @@ class _FilterSheetState extends ConsumerState<_FilterSheet> {
           ),
           const Gap(32),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              double? lat;
+              double? lng;
+              if (_sort == 'NEAREST') {
+                try {
+                  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+                  if (!serviceEnabled) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enable location services to find nearest turfs.'), backgroundColor: AppColors.error),
+                      );
+                    }
+                    return;
+                  }
+                  LocationPermission permission = await Geolocator.checkPermission();
+                  if (permission == LocationPermission.denied) {
+                    permission = await Geolocator.requestPermission();
+                    if (permission == LocationPermission.denied) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Location permission is denied.'), backgroundColor: AppColors.error),
+                        );
+                      }
+                      return;
+                    }
+                  }
+                  if (permission == LocationPermission.deniedForever) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Location permissions are permanently denied. Please enable them in settings.'), backgroundColor: AppColors.error),
+                      );
+                    }
+                    return;
+                  }
+
+                  Position position = await Geolocator.getCurrentPosition();
+                  lat = position.latitude;
+                  lng = position.longitude;
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to get location: $e'), backgroundColor: AppColors.error),
+                    );
+                  }
+                  return;
+                }
+              }
+
               ref.read(turfFilterProvider.notifier).update(TurfFilterState(
                     search: ref.read(turfFilterProvider).search,
                     sportType: _sport,
                     city: _city,
                     sortBy: _sort,
+                    latitude: lat,
+                    longitude: lng,
                   ));
-              Navigator.pop(context);
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
             },
             child: const Text('Apply Changes'),
           ),

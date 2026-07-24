@@ -37,7 +37,7 @@ public class TeamController {
     @PostMapping
     public ResponseEntity<ApiResponse<TeamDto>> createTeam(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody TeamDto data) {
+            @Valid @RequestBody TeamDto data) {
         data.setCaptainId(userDetails.getUser().getId());
         TeamDto created = teamService.createTeam(data);
         return ResponseEntity.ok(ApiResponse.success(created, "Team created successfully"));
@@ -49,5 +49,13 @@ public class TeamController {
             @Valid @RequestBody JoinTeamRequest request) {
         teamService.joinTeam(userDetails.getUser().getId(), request);
         return ResponseEntity.ok(ApiResponse.success(null, "Successfully joined the team"));
+    }
+
+    @DeleteMapping("/{id}/leave")
+    public ResponseEntity<ApiResponse<Object>> leaveTeam(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        teamService.leaveTeam(userDetails.getUser().getId(), id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Successfully left the team"));
     }
 }

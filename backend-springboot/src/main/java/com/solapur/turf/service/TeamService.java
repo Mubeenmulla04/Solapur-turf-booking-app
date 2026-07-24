@@ -108,6 +108,17 @@ public class TeamService {
         teamMemberRepository.save(teamMember);
     }
 
+    public void leaveTeam(UUID userId, UUID teamId) {
+        // Retrieve team to make sure it exists
+        teamRepository.findById(teamId)
+                .orElseThrow(() -> new ApiException("Team not found", HttpStatus.NOT_FOUND));
+
+        TeamMember teamMember = teamMemberRepository.findByTeamIdAndUserId(teamId, userId)
+                .orElseThrow(() -> new ApiException("You are not a member of this team", HttpStatus.NOT_FOUND));
+
+        teamMemberRepository.delete(teamMember);
+    }
+
     private TeamDto mapToDto(Team team) {
         return TeamDto.builder()
                 .id(team.getId())

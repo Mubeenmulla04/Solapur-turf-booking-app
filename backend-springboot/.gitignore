@@ -31,3 +31,18 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Environment Variables & Secrets ###
+.env
+.env.local
+.env.production
+*.pem
+*.key
+*-service-account.json
+firebase-service-account.json
+google-drive-service-account.json
+
+### Uploads & Temporary Files ###
+uploads/
+temp/
+*.log

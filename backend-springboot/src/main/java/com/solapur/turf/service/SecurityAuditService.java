@@ -20,8 +20,22 @@ public class SecurityAuditService {
 
     private final AuditLogRepository auditLogRepository;
 
+    private static class AttemptTracker {
+        final AtomicInteger count = new AtomicInteger(0);
+        volatile LocalDateTime lastAttempt = LocalDateTime.now();
+
+        int incrementAndGet() {
+            lastAttempt = LocalDateTime.now();
+            return count.incrementAndGet();
+        }
+
+        int get() {
+            return count.get();
+        }
+    }
+
     // In-memory counters for real-time monitoring
-    private final Map<String, AtomicInteger> failedLoginAttempts = new ConcurrentHashMap<>();
+    private final Map<String, AttemptTracker> failedLoginAttempts = new ConcurrentHashMap<>();
     private final Map<String, AtomicInteger> suspiciousActivities = new ConcurrentHashMap<>();
 
     private static final int MAX_FAILED_ATTEMPTS = 5;
@@ -36,12 +50,10 @@ public class SecurityAuditService {
 
     public void recordFailedLogin(String email, String ipAddress) {
         String key = email + ":" + ipAddress;
-        failedLoginAttempts.computeIfAbsent(key, k -> new AtomicInteger(0)).incrementAndGet();
-
-        if (failedLoginAttempts.get(key).get() >= MAX_FAILED_ATTEMPTS) {
+        AttemptTracker tracker = failedLoginAttempts.computeIfAbsent(key, k -> new AttemptTracker());
+        if (tracker.incrementAndGet() >= MAX_FAILED_ATTEMPTS) {
             logSecurityIncident("MULTIPLE_FAILED_LOGINS", email, ipAddress,
                     "Multiple failed login attempts detected");
-            // In a real system, you would lock the account here
         }
     }
 
@@ -54,8 +66,15 @@ public class SecurityAuditService {
 
     public boolean isAccountLocked(String email, String ipAddress) {
         String key = email + ":" + ipAddress;
-        AtomicInteger attempts = failedLoginAttempts.get(key);
-        return attempts != null && attempts.get() >= MAX_FAILED_ATTEMPTS;
+        AttemptTracker tracker = failedLoginAttempts.get(key);
+        if (tracker == null) {
+            return false;
+        }
+        if (tracker.lastAttempt.isBefore(LocalDateTime.now().minusMinutes(LOCKOUT_DURATION_MINUTES))) {
+            failedLoginAttempts.remove(key);
+            return false;
+        }
+        return tracker.get() >= MAX_FAILED_ATTEMPTS;
     }
 
     private void checkForSuspiciousActivities() {
@@ -65,8 +84,9 @@ public class SecurityAuditService {
         // Check for rapid API calls from same IP
         List<AuditLog> recentLogs = auditLogRepository.findByTimestampAfterOrderByTimestampDesc(oneHourAgo);
         Map<String, Long> ipCounts = recentLogs.stream()
+                .filter(log -> log.getIpAddress() != null)
                 .collect(java.util.stream.Collectors.groupingBy(
-                        log -> log.getIpAddress(),
+                        AuditLog::getIpAddress,
                         java.util.stream.Collectors.counting()));
 
         ipCounts.entrySet().stream()
@@ -78,18 +98,13 @@ public class SecurityAuditService {
     }
 
     private void cleanupOldCounters() {
-        // Clean up counters older than lockout duration
-        // LocalDateTime cutoff = LocalDateTime.now().minusMinutes(LOCKOUT_DURATION_MINUTES);
-
-        failedLoginAttempts.entrySet().removeIf(entry -> {
-            // In a real implementation, you'd store timestamps
-            return false; // For now, keep all counters
-        });
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(LOCKOUT_DURATION_MINUTES);
+        failedLoginAttempts.entrySet().removeIf(entry -> entry.getValue().lastAttempt.isBefore(cutoff));
     }
 
     private void logSecurityMetrics() {
         int totalFailedAttempts = failedLoginAttempts.values().stream()
-                .mapToInt(AtomicInteger::get).sum();
+                .mapToInt(AttemptTracker::get).sum();
         int totalSuspiciousActivities = suspiciousActivities.values().stream()
                 .mapToInt(AtomicInteger::get).sum();
 
@@ -99,9 +114,6 @@ public class SecurityAuditService {
 
     private void logSecurityIncident(String incidentType, String userId, String ipAddress, String description) {
         // Log to app log only — do NOT persist to audit_logs DB table here.
-        // AuditLog requires non-null userId/userEmail/userRole, which are unavailable
-        // for pre-authentication incidents (e.g., failed logins). Persisting here
-        // would cause a DataIntegrityViolationException → 500 for every failed login.
         log.warn("Security Incident - Type: {}, User: {}, IP: {}, Description: {}",
                 incidentType, userId, ipAddress, description);
     }

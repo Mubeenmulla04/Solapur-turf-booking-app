@@ -2,6 +2,9 @@ package com.solapur.turf.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.solapur.turf.enums.SportType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,26 +15,30 @@ import java.util.UUID;
 public class TeamDto {
     private UUID id;
 
-    /** Accepts both "name" (legacy) and "teamName" (Flutter client). */
+    @NotBlank(message = "Team name is required")
+    @Size(min = 2, max = 50, message = "Team name must be between 2 and 50 characters")
     @JsonAlias("teamName")
     private String name;
 
-    /** Serialized as "inviteCode". Flutter join screen uses "teamCode". */
     @JsonAlias({"teamCode", "team_code"})
     private String inviteCode;
 
     private UUID captainId;
 
+    @NotNull(message = "Sport type is required")
     @JsonAlias("sport_type")
     private SportType sportType;
 
-    /** Accepts both "city" (backend) and "homeCity" (Flutter client). */
+    @NotBlank(message = "City is required")
+    @Size(max = 100, message = "City must be less than 100 characters")
     @JsonAlias({"homeCity", "home_city"})
     private String city;
 
     @JsonAlias("logo_url")
     private String logoUrl;
 
+    @Size(max = 500, message = "Description must be less than 500 characters")
     private String description;
+
     private boolean isActive;
 }

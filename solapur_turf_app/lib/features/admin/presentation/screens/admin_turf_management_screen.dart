@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import 'admin_dashboard_screen.dart';
 
 final _adminTurfsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final dio = ref.watch(apiClientProvider);
@@ -43,6 +44,7 @@ class AdminTurfManagementScreen extends ConsumerWidget {
             final t = turfs[i];
             final isActive = t['active'] ?? t['isActive'] ?? false;
             final isVerified = t['verified'] ?? t['isVerified'] ?? false;
+            final isFeatured = t['featured'] ?? t['isFeatured'] ?? false;
 
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
@@ -60,6 +62,30 @@ class AdminTurfManagementScreen extends ConsumerWidget {
                         child: Icon(Icons.warning_amber_rounded, color: AppColors.warning),
                       ),
                     const Gap(8),
+                    IconButton(
+                      icon: Icon(
+                        isFeatured ? Icons.star_rounded : Icons.star_border_rounded,
+                        color: isFeatured ? const Color(0xFFFFB300) : AppColors.textHint,
+                        size: 24,
+                      ),
+                      tooltip: isFeatured ? 'Remove Featured' : 'Mark as Featured',
+                      onPressed: () async {
+                        try {
+                          final dio = ref.read(apiClientProvider);
+                          await dio.put('/admin/turfs/${t['turfId']}/featured',
+                              queryParameters: {'isFeatured': !isFeatured});
+                          ref.invalidate(_adminTurfsProvider);
+                          ref.invalidate(adminStatsProvider);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(!isFeatured ? '⭐ Turf marked as Featured!' : 'Turf removed from Featured')),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      },
+                    ),
                     Switch(
                       value: isActive,
                       activeColor: AppColors.primary,
@@ -68,6 +94,7 @@ class AdminTurfManagementScreen extends ConsumerWidget {
                           final dio = ref.read(apiClientProvider);
                           await dio.put('/admin/turfs/${t['turfId']}/status', queryParameters: {'isActive': val});
                           ref.invalidate(_adminTurfsProvider);
+                          ref.invalidate(adminStatsProvider);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('Turf ${val ? 'enabled' : 'disabled'}!')),
                           );

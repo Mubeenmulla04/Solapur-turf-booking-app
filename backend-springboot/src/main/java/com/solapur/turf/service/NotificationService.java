@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.core.io.Resource;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
@@ -73,6 +74,7 @@ public class NotificationService {
         }
     }
 
+    @Async
     public void sendPushNotification(String token, String title, String body) {
         if (token == null || token.isEmpty()) {
             log.warn("No FCM token provided for notification: {}", title);
@@ -101,6 +103,7 @@ public class NotificationService {
         }
     }
 
+    @Async
     public void sendOtpEmail(String to, String otp) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();

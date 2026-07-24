@@ -37,8 +37,13 @@ public class RefundController {
     }
 
     @GetMapping("/booking/{bookingId}")
-    public ResponseEntity<ApiResponse<List<RefundDto>>> getRefundsByBooking(@PathVariable UUID bookingId) {
-        List<RefundDto> refunds = refundService.getRefundsByBooking(bookingId);
+    public ResponseEntity<ApiResponse<List<RefundDto>>> getRefundsByBooking(
+            @PathVariable UUID bookingId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        boolean isAdmin = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        List<RefundDto> refunds = refundService.getRefundsByBooking(
+                bookingId, userDetails.getUser().getId(), isAdmin);
         return ResponseEntity.ok(ApiResponse.success(refunds, "Refunds for booking retrieved successfully"));
     }
 

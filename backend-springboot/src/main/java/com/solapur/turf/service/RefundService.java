@@ -67,7 +67,18 @@ public class RefundService {
         return new PageResponse<>(refundPage.map(this::mapToDto));
     }
 
-    public List<RefundDto> getRefundsByBooking(UUID bookingId) {
+    public List<RefundDto> getRefundsByBooking(UUID bookingId, UUID requestingUserId, boolean isAdmin) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ApiException("Booking not found", HttpStatus.NOT_FOUND));
+
+        boolean isCustomer = booking.getUser().getId().equals(requestingUserId);
+        boolean isOwner = booking.getTurf().getOwner() != null && 
+                          booking.getTurf().getOwner().getUser().getId().equals(requestingUserId);
+
+        if (!isAdmin && !isCustomer && !isOwner) {
+            throw new ApiException("You do not have permission to view refunds for this booking", HttpStatus.FORBIDDEN);
+        }
+
         List<Refund> refunds = refundRepository.findByBookingId(bookingId);
         return refunds.stream().map(this::mapToDto).collect(Collectors.toList());
     }

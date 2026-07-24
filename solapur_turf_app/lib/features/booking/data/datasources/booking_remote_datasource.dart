@@ -138,7 +138,10 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
   @override
   Future<void> cancelBooking(String bookingId) async {
     try {
-      await _dio.post('/bookings/$bookingId/cancel');
+      await _dio.patch(
+        '/bookings/$bookingId/cancel',
+        data: {'reason': 'User requested cancellation'},
+      );
     } on DioException catch (e) {
       throw AppException.fromDioException(e);
     }

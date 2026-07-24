@@ -36,6 +36,7 @@ public class PaymentService {
     private final UserRepository userRepository;
     private final WalletService walletService;
     private final NotificationService notificationService;
+    private final EmailService emailService;
 
     @Value("${razorpay.key.secret}")
     private String keySecret;
@@ -109,6 +110,21 @@ public class PaymentService {
 
             notificationService.sendPushNotification(transaction.getUser().getFcmToken(), 
                 "Slot Confirmed! 🏟️", "Your booking at " + booking.getTurf().getName() + " is confirmed.");
+
+            try {
+                emailService.sendBookingConfirmation(
+                    booking.getUser().getEmail(),
+                    booking.getUser().getFullName(),
+                    booking.getTurf().getName(),
+                    booking.getBookingDate().toString(),
+                    booking.getStartTime().toString(),
+                    booking.getEndTime().toString(),
+                    booking.getId().toString(),
+                    booking.getFinalAmount() != null ? booking.getFinalAmount().doubleValue() : 0
+                );
+            } catch (Exception e) {
+                log.error("Failed to send webhook success email: {}", e.getMessage());
+            }
         }
         log.info("Successfully processed payment via webhook for order: {}", transaction.getGatewayOrderId());
     }
@@ -228,6 +244,21 @@ public class PaymentService {
                     booking.setPaymentStatus(PaymentStatus.PAID);
                     booking.setBookingStatus(BookingStatus.CONFIRMED);
                     bookingRepository.save(booking);
+
+                    try {
+                        emailService.sendBookingConfirmation(
+                            booking.getUser().getEmail(),
+                            booking.getUser().getFullName(),
+                            booking.getTurf().getName(),
+                            booking.getBookingDate().toString(),
+                            booking.getStartTime().toString(),
+                            booking.getEndTime().toString(),
+                            booking.getId().toString(),
+                            booking.getFinalAmount() != null ? booking.getFinalAmount().doubleValue() : 0
+                        );
+                    } catch (Exception e) {
+                        log.error("Failed to send signature verification success email: {}", e.getMessage());
+                    }
                 }
             }
             return isValid;

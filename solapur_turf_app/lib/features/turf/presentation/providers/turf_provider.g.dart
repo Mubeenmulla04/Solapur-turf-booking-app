@@ -23,7 +23,7 @@ final turfRepositoryProvider = AutoDisposeProvider<TurfRepository>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef TurfRepositoryRef = AutoDisposeProviderRef<TurfRepository>;
-String _$turfsHash() => r'67a5b11982c3632327e0dce61ba8289b5f137771';
+String _$turfsHash() => r'f9b7939f5537324b14c2542657e7c23f044d415d';
 
 /// See also [turfs].
 @ProviderFor(turfs)

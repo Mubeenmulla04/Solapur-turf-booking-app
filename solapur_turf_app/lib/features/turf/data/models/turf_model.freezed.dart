@@ -51,6 +51,8 @@ mixin _$TurfListingModel {
   dynamic get latitude => throw _privateConstructorUsedError;
   dynamic get longitude => throw _privateConstructorUsedError;
   List<TurfImageModel>? get images => throw _privateConstructorUsedError;
+  @JsonKey(name: 'isFeatured')
+  bool get isFeatured => throw _privateConstructorUsedError;
 
   /// Serializes this TurfListingModel to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -88,7 +90,8 @@ abstract class $TurfListingModelCopyWith<$Res> {
       String? description,
       dynamic latitude,
       dynamic longitude,
-      List<TurfImageModel>? images});
+      List<TurfImageModel>? images,
+      @JsonKey(name: 'isFeatured') bool isFeatured});
 }
 
 /// @nodoc
@@ -126,6 +129,7 @@ class _$TurfListingModelCopyWithImpl<$Res, $Val extends TurfListingModel>
     Object? latitude = freezed,
     Object? longitude = freezed,
     Object? images = freezed,
+    Object? isFeatured = null,
   }) {
     return _then(_value.copyWith(
       turfId: null == turfId
@@ -208,6 +212,10 @@ class _$TurfListingModelCopyWithImpl<$Res, $Val extends TurfListingModel>
           ? _value.images
           : images // ignore: cast_nullable_to_non_nullable
               as List<TurfImageModel>?,
+      isFeatured: null == isFeatured
+          ? _value.isFeatured
+          : isFeatured // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -240,7 +248,8 @@ abstract class _$$TurfListingModelImplCopyWith<$Res>
       String? description,
       dynamic latitude,
       dynamic longitude,
-      List<TurfImageModel>? images});
+      List<TurfImageModel>? images,
+      @JsonKey(name: 'isFeatured') bool isFeatured});
 }
 
 /// @nodoc
@@ -276,6 +285,7 @@ class __$$TurfListingModelImplCopyWithImpl<$Res>
     Object? latitude = freezed,
     Object? longitude = freezed,
     Object? images = freezed,
+    Object? isFeatured = null,
   }) {
     return _then(_$TurfListingModelImpl(
       turfId: null == turfId
@@ -358,6 +368,10 @@ class __$$TurfListingModelImplCopyWithImpl<$Res>
           ? _value._images
           : images // ignore: cast_nullable_to_non_nullable
               as List<TurfImageModel>?,
+      isFeatured: null == isFeatured
+          ? _value.isFeatured
+          : isFeatured // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -386,7 +400,8 @@ class _$TurfListingModelImpl implements _TurfListingModel {
       this.description,
       this.latitude,
       this.longitude,
-      final List<TurfImageModel>? images})
+      final List<TurfImageModel>? images,
+      @JsonKey(name: 'isFeatured') this.isFeatured = false})
       : _peakHours = peakHours,
         _amenities = amenities,
         _images = images;
@@ -470,8 +485,12 @@ class _$TurfListingModelImpl implements _TurfListingModel {
   }
 
   @override
+  @JsonKey(name: 'isFeatured')
+  final bool isFeatured;
+
+  @override
   String toString() {
-    return 'TurfListingModel(turfId: $turfId, turfName: $turfName, address: $address, city: $city, state: $state, pincode: $pincode, sportType: $sportType, surfaceType: $surfaceType, hourlyRate: $hourlyRate, isActive: $isActive, ratingAverage: $ratingAverage, totalReviews: $totalReviews, size: $size, peakHourRate: $peakHourRate, peakHours: $peakHours, amenities: $amenities, description: $description, latitude: $latitude, longitude: $longitude, images: $images)';
+    return 'TurfListingModel(turfId: $turfId, turfName: $turfName, address: $address, city: $city, state: $state, pincode: $pincode, sportType: $sportType, surfaceType: $surfaceType, hourlyRate: $hourlyRate, isActive: $isActive, ratingAverage: $ratingAverage, totalReviews: $totalReviews, size: $size, peakHourRate: $peakHourRate, peakHours: $peakHours, amenities: $amenities, description: $description, latitude: $latitude, longitude: $longitude, images: $images, isFeatured: $isFeatured)';
   }
 
   @override
@@ -509,7 +528,9 @@ class _$TurfListingModelImpl implements _TurfListingModel {
                 other.description == description) &&
             const DeepCollectionEquality().equals(other.latitude, latitude) &&
             const DeepCollectionEquality().equals(other.longitude, longitude) &&
-            const DeepCollectionEquality().equals(other._images, _images));
+            const DeepCollectionEquality().equals(other._images, _images) &&
+            (identical(other.isFeatured, isFeatured) ||
+                other.isFeatured == isFeatured));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -535,7 +556,8 @@ class _$TurfListingModelImpl implements _TurfListingModel {
         description,
         const DeepCollectionEquality().hash(latitude),
         const DeepCollectionEquality().hash(longitude),
-        const DeepCollectionEquality().hash(_images)
+        const DeepCollectionEquality().hash(_images),
+        isFeatured
       ]);
 
   /// Create a copy of TurfListingModel
@@ -557,29 +579,31 @@ class _$TurfListingModelImpl implements _TurfListingModel {
 
 abstract class _TurfListingModel implements TurfListingModel {
   const factory _TurfListingModel(
-      {@JsonKey(name: 'turfId') required final String turfId,
-      @JsonKey(name: 'turfName') required final String turfName,
-      required final String address,
-      required final String city,
-      required final String state,
-      @JsonKey(name: 'pinCode') required final String pincode,
-      @JsonKey(name: 'sportType') required final String sportType,
-      @JsonKey(name: 'surfaceType') required final String surfaceType,
-      @JsonKey(name: 'hourlyRate') required final dynamic hourlyRate,
-      @JsonKey(name: 'isActive', defaultValue: true)
-      required final bool isActive,
-      @JsonKey(name: 'ratingAverage', defaultValue: 0)
-      required final dynamic ratingAverage,
-      @JsonKey(name: 'reviewCount', defaultValue: 0)
-      required final int totalReviews,
-      final String? size,
-      @JsonKey(name: 'peak_hour_rate') final dynamic peakHourRate,
-      @JsonKey(name: 'peak_hours') final List<String>? peakHours,
-      final List<String>? amenities,
-      final String? description,
-      final dynamic latitude,
-      final dynamic longitude,
-      final List<TurfImageModel>? images}) = _$TurfListingModelImpl;
+          {@JsonKey(name: 'turfId') required final String turfId,
+          @JsonKey(name: 'turfName') required final String turfName,
+          required final String address,
+          required final String city,
+          required final String state,
+          @JsonKey(name: 'pinCode') required final String pincode,
+          @JsonKey(name: 'sportType') required final String sportType,
+          @JsonKey(name: 'surfaceType') required final String surfaceType,
+          @JsonKey(name: 'hourlyRate') required final dynamic hourlyRate,
+          @JsonKey(name: 'isActive', defaultValue: true)
+          required final bool isActive,
+          @JsonKey(name: 'ratingAverage', defaultValue: 0)
+          required final dynamic ratingAverage,
+          @JsonKey(name: 'reviewCount', defaultValue: 0)
+          required final int totalReviews,
+          final String? size,
+          @JsonKey(name: 'peak_hour_rate') final dynamic peakHourRate,
+          @JsonKey(name: 'peak_hours') final List<String>? peakHours,
+          final List<String>? amenities,
+          final String? description,
+          final dynamic latitude,
+          final dynamic longitude,
+          final List<TurfImageModel>? images,
+          @JsonKey(name: 'isFeatured') final bool isFeatured}) =
+      _$TurfListingModelImpl;
 
   factory _TurfListingModel.fromJson(Map<String, dynamic> json) =
       _$TurfListingModelImpl.fromJson;
@@ -635,6 +659,9 @@ abstract class _TurfListingModel implements TurfListingModel {
   dynamic get longitude;
   @override
   List<TurfImageModel>? get images;
+  @override
+  @JsonKey(name: 'isFeatured')
+  bool get isFeatured;
 
   /// Create a copy of TurfListingModel
   /// with the given fields replaced by the non-null parameter values.

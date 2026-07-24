@@ -35,6 +35,7 @@ _$TurfListingModelImpl _$$TurfListingModelImplFromJson(
       images: (json['images'] as List<dynamic>?)
           ?.map((e) => TurfImageModel.fromJson(e as Map<String, dynamic>))
           .toList(),
+      isFeatured: json['isFeatured'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$TurfListingModelImplToJson(
@@ -60,6 +61,7 @@ Map<String, dynamic> _$$TurfListingModelImplToJson(
       'latitude': instance.latitude,
       'longitude': instance.longitude,
       'images': instance.images,
+      'isFeatured': instance.isFeatured,
     };
 
 _$TurfImageModelImpl _$$TurfImageModelImplFromJson(Map<String, dynamic> json) =>

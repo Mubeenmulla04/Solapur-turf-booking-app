@@ -66,6 +66,11 @@ class RetryInterceptor extends Interceptor {
     ErrorInterceptorHandler handler,
   ) async {
     final opts = err.requestOptions;
+    // Skip retries for auth endpoints (fail fast on login/register)
+    if (opts.path.contains('/auth/login') || opts.path.contains('/auth/register')) {
+      return handler.next(err);
+    }
+
     final retryCount = (opts.extra['retry_count'] as int?) ?? 0;
 
     final isRetryable = err.type == DioExceptionType.connectionError ||
@@ -118,12 +123,14 @@ class CacheInterceptor extends Interceptor {
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    if (options.method != 'GET') {
+    final method = options.method.toUpperCase();
+    if (method != 'GET') {
       return handler.next(options);
     }
 
     // Force network fetch and bypass cache if requested
     if (options.extra['refresh'] == true) {
+      print('[CacheInterceptor] GET Cache Bypassed (Refresh requested): ${options.uri}');
       return handler.next(options);
     }
 
@@ -132,6 +139,7 @@ class CacheInterceptor extends Interceptor {
     final entry = _cache[key];
 
     if (entry != null && DateTime.now().isBefore(entry.expiration)) {
+      print('[CacheInterceptor] CACHE HIT: $key');
       // CACHE HIT: Return instantly without network request (O(1) resolution)
       return handler.resolve(Response(
         requestOptions: options,
@@ -141,18 +149,28 @@ class CacheInterceptor extends Interceptor {
       ));
     }
 
+    print('[CacheInterceptor] CACHE MISS (Fetching from network): $key');
     // CACHE MISS: Proceed to network
     handler.next(options);
   }
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    if (response.requestOptions.method == 'GET' && response.statusCode == 200) {
-      final key = '${response.requestOptions.uri}';
+    final method = response.requestOptions.method.toUpperCase();
+    final key = '${response.requestOptions.uri}';
+
+    if (method == 'GET' && response.statusCode == 200) {
+      print('[CacheInterceptor] Caching response for: $key');
       _cache[key] = _CacheEntry(
         data: response.data,
         expiration: DateTime.now().add(maxAge),
       );
+    } else if (method != 'GET' &&
+        response.statusCode != null &&
+        response.statusCode! >= 200 &&
+        response.statusCode! < 300) {
+      print('[CacheInterceptor] SUCCESSFUL MUTATION ($method at $key). Invaliding cache.');
+      _cache.clear();
     }
     handler.next(response);
   }

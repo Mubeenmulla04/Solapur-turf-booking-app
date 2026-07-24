@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 import java.util.UUID;
 
@@ -54,12 +55,14 @@ public class TournamentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<TournamentDto>> createTournament(@RequestBody TournamentDto data) {
         TournamentDto created = tournamentService.createTournament(data);
         return ResponseEntity.ok(ApiResponse.created(created, "Tournament created successfully"));
     }
 
     @PostMapping("/{id}/generate-bracket")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Object>> generateBracket(@PathVariable String id) {
         tournamentService.generateKnockoutBracket(UUID.fromString(id));
         return ResponseEntity.ok(ApiResponse.success(null, "Bracket generated successfully"));
@@ -85,6 +88,7 @@ public class TournamentController {
     }
 
     @PostMapping("/{id}/matches/{matchId}/score")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Object>> updateScore(
             @PathVariable String id,
             @PathVariable String matchId,

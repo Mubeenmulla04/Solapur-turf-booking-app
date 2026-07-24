@@ -28,6 +28,7 @@ class TurfListingModel with _$TurfListingModel {
     dynamic latitude,
     dynamic longitude,
     List<TurfImageModel>? images,
+    @Default(false) @JsonKey(name: 'isFeatured') bool isFeatured,
   }) = _TurfListingModel;
 
   factory TurfListingModel.fromJson(Map<String, dynamic> json) =>
@@ -93,6 +94,7 @@ extension TurfListingModelX on TurfListingModel {
           }
           return url;
         }).toList(),
+        isFeatured: isFeatured,
       );
 
   SurfaceType _parseSurface(String s) => switch (s.toUpperCase()) {

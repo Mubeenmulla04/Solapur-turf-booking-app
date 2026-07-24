@@ -15,6 +15,7 @@ import '../../../turf/domain/entities/turf_listing.dart';
 import '../../../turf/presentation/providers/turf_provider.dart';
 import '../../domain/entities/booking.dart';
 import '../providers/booking_provider.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
 
 class BookingScreen extends ConsumerStatefulWidget {
   final String turfId;
@@ -145,6 +146,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         success: (s) {
           // Invalidate both providers so the slot grid and bookings list refresh
           ref.invalidate(myBookingsProvider);
+          ref.invalidate(userProfileProvider);
           ref.invalidate(
             availableSlotsProvider(turfId: widget.turfId, date: _dateString),
           );

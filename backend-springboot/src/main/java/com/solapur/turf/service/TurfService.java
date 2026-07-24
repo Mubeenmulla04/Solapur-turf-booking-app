@@ -8,11 +8,19 @@ import com.solapur.turf.exception.ApiException;
 import com.solapur.turf.repository.TurfListingRepository;
 import com.solapur.turf.repository.TurfOwnerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -24,9 +32,109 @@ public class TurfService {
     private final TurfListingRepository turfListingRepository;
     private final TurfOwnerRepository turfOwnerRepository;
 
+    @Cacheable(value = "activeTurfs")
     public List<TurfListingDto> getAllActiveTurfs() {
         return turfListingRepository.findByIsActiveTrueAndIsVerifiedTrue()
                 .stream().map(this::mapToDto).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<TurfListingDto> getFilteredTurfs(
+            String city,
+            String sportType,
+            String search,
+            Double minPrice,
+            Double maxPrice,
+            String sortBy,
+            int page,
+            int limit,
+            Double userLat,
+            Double userLng
+    ) {
+        // Special case: NEAREST requires a native Haversine query that returns sorted distances.
+        // For this path, we still post-filter in memory (subscription check) + paginate.
+        if ("NEAREST".equalsIgnoreCase(sortBy) && userLat != null && userLng != null) {
+            List<TurfListing> nearest = turfListingRepository.findNearestTurfs(userLat, userLng);
+            nearest = nearest.stream()
+                    .filter(t -> isOwnerSubscriptionValid(t.getOwner()))
+                    .collect(Collectors.toList());
+            // Apply additional filters in-memory (dataset is already small — only active+verified)
+            if (city != null && !city.isBlank()) {
+                nearest = nearest.stream().filter(t -> city.trim().equalsIgnoreCase(t.getCity())).collect(Collectors.toList());
+            }
+            if (sportType != null && !sportType.isBlank()) {
+                nearest = nearest.stream().filter(t -> t.getSportType() != null && t.getSportType().name().equalsIgnoreCase(sportType.trim())).collect(Collectors.toList());
+            }
+            if (search != null && !search.isBlank()) {
+                String term = search.toLowerCase().trim();
+                nearest = nearest.stream().filter(t ->
+                        (t.getName() != null && t.getName().toLowerCase().contains(term)) ||
+                        (t.getAddress() != null && t.getAddress().toLowerCase().contains(term))
+                ).collect(Collectors.toList());
+            }
+            if (minPrice != null) {
+                BigDecimal min = BigDecimal.valueOf(minPrice);
+                nearest = nearest.stream().filter(t -> t.getHourlyRate() != null && t.getHourlyRate().compareTo(min) >= 0).collect(Collectors.toList());
+            }
+            if (maxPrice != null) {
+                BigDecimal max = BigDecimal.valueOf(maxPrice);
+                nearest = nearest.stream().filter(t -> t.getHourlyRate() != null && t.getHourlyRate().compareTo(max) <= 0).collect(Collectors.toList());
+            }
+            bubbleFeatured(nearest);
+            int from = Math.min((page - 1) * limit, nearest.size());
+            int to = Math.min(from + limit, nearest.size());
+            return nearest.subList(from, to).stream().map(this::mapToDto).collect(Collectors.toList());
+        }
+
+        // ── DB-level filtering + pagination (all other sort modes) ──────────────
+        Sort sort = buildSort(sortBy);
+        Pageable pageable = PageRequest.of(Math.max(0, page - 1), limit, sort);
+
+        SportType sportTypeEnum = null;
+        if (sportType != null && !sportType.isBlank()) {
+            try {
+                sportTypeEnum = SportType.valueOf(sportType.trim().toUpperCase());
+            } catch (IllegalArgumentException ignored) {
+                // unknown sportType → return empty results
+                return List.of();
+            }
+        }
+
+        BigDecimal minPriceBd = minPrice != null ? BigDecimal.valueOf(minPrice) : null;
+        BigDecimal maxPriceBd = maxPrice != null ? BigDecimal.valueOf(maxPrice) : null;
+        String cityParam    = (city != null && !city.isBlank()) ? city.trim() : null;
+        String searchParam  = (search != null && !search.isBlank()) ? search.trim() : null;
+
+        Page<TurfListing> dbPage = turfListingRepository.findFiltered(
+                cityParam, sportTypeEnum, searchParam, minPriceBd, maxPriceBd, pageable);
+
+        // Post-filter by owner subscription (cannot easily push into JPQL without joining owners)
+        List<TurfListing> results = dbPage.getContent().stream()
+                .filter(t -> isOwnerSubscriptionValid(t.getOwner()))
+                .collect(Collectors.toList());
+
+        bubbleFeatured(results);
+        return results.stream().map(this::mapToDto).collect(Collectors.toList());
+    }
+
+    /** Push featured (ACTIVE subscription only) turfs to top of results list. */
+    private void bubbleFeatured(List<TurfListing> turfs) {
+        turfs.sort((t1, t2) -> {
+            boolean f1 = t1.isFeatured() && t1.getOwner() != null && "ACTIVE".equalsIgnoreCase(t1.getOwner().getSubscriptionStatus());
+            boolean f2 = t2.isFeatured() && t2.getOwner() != null && "ACTIVE".equalsIgnoreCase(t2.getOwner().getSubscriptionStatus());
+            return Boolean.compare(f2, f1);
+        });
+    }
+
+    /** Maps sortBy query param to Spring Sort object for use with Pageable. */
+    private Sort buildSort(String sortBy) {
+        if (sortBy == null) return Sort.by(Sort.Direction.DESC, "createdAt");
+        return switch (sortBy.toUpperCase().trim()) {
+            case "PRICE_ASC"  -> Sort.by(Sort.Direction.ASC,  "hourlyRate");
+            case "PRICE_DESC" -> Sort.by(Sort.Direction.DESC, "hourlyRate");
+            case "RATING_DESC" -> Sort.by(Sort.Direction.DESC, "ratingAverage");
+            default           -> Sort.by(Sort.Direction.DESC, "createdAt"); // NEWEST
+        };
     }
 
     public List<TurfListingDto> getTurfsByCity(String city) {
@@ -48,8 +156,8 @@ public class TurfService {
     // Example map logic (we could use MapStruct for deeper projects)
     public TurfListingDto mapToDto(TurfListing turf) {
         return TurfListingDto.builder()
-                .turfId(turf.getId().toString())
-                .ownerId(turf.getOwner().getId())
+                .turfId(turf.getId() != null ? turf.getId().toString() : "")
+                .ownerId(turf.getOwner() != null ? turf.getOwner().getId() : null)
                 .turfName(turf.getName())
                 .description(turf.getDescription())
                 .address(turf.getAddress())
@@ -74,6 +182,7 @@ public class TurfService {
                 .closingTime(turf.getClosingTime())
                 .isActive(turf.isActive())
                 .isVerified(turf.isVerified())
+                .isFeatured(turf.isFeatured())
                 .build();
     }
 
@@ -90,6 +199,7 @@ public class TurfService {
                 .stream().map(this::mapToDto).collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "activeTurfs", allEntries = true)
     public TurfListingDto createTurf(UUID userId, TurfListingDto turfDto) {
         // Find the turf owner for this user
         TurfOwner owner = turfOwnerRepository.findByUserId(userId)
@@ -117,7 +227,8 @@ public class TurfService {
                 .closingTime(turfDto.getClosingTime() != null ? turfDto.getClosingTime() : LocalTime.of(23, 0))
                 .owner(owner)
                 .isActive(true)
-                .isVerified(true) // Auto-verified for instant visibility on user dashboard
+                .isVerified(false) // Requires admin approval before becoming visible on user dashboard
+                .isFeatured(turfDto.isFeatured())
                 .ratingAverage(BigDecimal.ZERO)
                 .reviewCount(0)
                 .build();
@@ -126,6 +237,7 @@ public class TurfService {
         return mapToDto(saved);
     }
 
+    @CacheEvict(value = "activeTurfs", allEntries = true)
     public TurfListingDto updateTurf(UUID turfId, UUID userId, TurfListingDto turfDto) {
         // Find the turf owner for this user
         TurfOwner owner = turfOwnerRepository.findByUserId(userId)
@@ -159,11 +271,13 @@ public class TurfService {
         if (turfDto.getRules() != null) turf.setRules(turfDto.getRules());
         if (turfDto.getOpeningTime() != null) turf.setOpeningTime(turfDto.getOpeningTime());
         if (turfDto.getClosingTime() != null) turf.setClosingTime(turfDto.getClosingTime());
+        turf.setFeatured(turfDto.isFeatured());
 
         TurfListing saved = turfListingRepository.save(turf);
         return mapToDto(saved);
     }
 
+    @CacheEvict(value = "activeTurfs", allEntries = true)
     public void deleteTurf(UUID turfId, UUID userId) {
         // Find the turf owner for this user
         TurfOwner owner = turfOwnerRepository.findByUserId(userId)
@@ -180,6 +294,7 @@ public class TurfService {
         turfListingRepository.delete(turf);
     }
 
+    @CacheEvict(value = "activeTurfs", allEntries = true)
     public TurfListingDto updateTurfStatus(UUID turfId, UUID userId, boolean isActive) {
         // Find the turf owner for this user
         TurfOwner owner = turfOwnerRepository.findByUserId(userId)
@@ -220,5 +335,22 @@ public class TurfService {
         currentUrls.addAll(newUrls);
         turf.setImageUrls(currentUrls);
         turfListingRepository.save(turf);
+    }
+
+    private boolean isOwnerSubscriptionValid(TurfOwner owner) {
+        if (owner == null) {
+            return false;
+        }
+        if (!owner.isActive()) {
+            return false;
+        }
+        String status = owner.getSubscriptionStatus();
+        if (status == null || "TRIAL".equalsIgnoreCase(status)) {
+            return owner.getTrialEndsAt() != null && java.time.LocalDateTime.now().isBefore(owner.getTrialEndsAt());
+        }
+        if ("ACTIVE".equalsIgnoreCase(status)) {
+            return owner.getSubscriptionExpiresAt() != null && java.time.LocalDateTime.now().isBefore(owner.getSubscriptionExpiresAt());
+        }
+        return false;
     }
 }

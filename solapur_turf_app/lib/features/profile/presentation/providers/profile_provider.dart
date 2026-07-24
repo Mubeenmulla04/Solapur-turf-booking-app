@@ -9,7 +9,7 @@ final userProfileProvider = FutureProvider.autoDispose<User>((ref) async {
   final dio = ref.watch(apiClientProvider);
   try {
     final res = await dio.get('/users/me');
-    final model = UserModel.fromJson(res.data);
+    final model = UserModel.fromJson(res.data['data']);
     return model.toDomain();
   } on DioException catch (e) {
     throw Exception('Failed to load profile: ${e.response?.data?['message'] ?? e.message}');
@@ -21,7 +21,7 @@ final updateProfileProvider = FutureProvider.family.autoDispose<User, Map<String
   final dio = ref.watch(apiClientProvider);
   try {
     final res = await dio.put('/users/me', data: updates);
-    final model = UserModel.fromJson(res.data);
+    final model = UserModel.fromJson(res.data['data']);
     // Invalidate the profile provider so consumers get the new accurate state
     ref.invalidate(userProfileProvider);
     return model.toDomain();

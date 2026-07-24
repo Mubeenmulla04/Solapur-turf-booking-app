@@ -12,6 +12,8 @@ abstract class TurfRepository {
     String? sortBy,
     int page,
     int limit,
+    double? userLat,
+    double? userLng,
   });
 
   Future<Either<Failure, TurfListing>> getTurfById(String turfId);

@@ -13,6 +13,8 @@ import com.solapur.turf.exception.ApiException;
 import com.solapur.turf.repository.BookingRepository;
 import com.solapur.turf.repository.SettlementRepository;
 import com.solapur.turf.repository.TurfOwnerRepository;
+import com.solapur.turf.repository.PlatformSettingsRepository;
+import com.solapur.turf.entity.PlatformSettings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -35,6 +37,7 @@ public class SettlementService {
     private final SettlementRepository settlementRepository;
     private final BookingRepository bookingRepository;
     private final TurfOwnerRepository turfOwnerRepository;
+    private final PlatformSettingsRepository settingsRepository;
 
     public List<SettlementDto> getPendingSettlements() {
         return settlementRepository.findByStatus(SettlementStatus.PENDING)
@@ -111,7 +114,11 @@ public class SettlementService {
                 .map(Booking::getFinalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal platformCommission = totalRevenue.multiply(BigDecimal.valueOf(0.10)); // 10% commission
+        PlatformSettings settings = settingsRepository.getSettings();
+        BigDecimal commissionRate = (settings != null && settings.getPlatformFeePercentage() != null)
+                ? settings.getPlatformFeePercentage().divide(BigDecimal.valueOf(100.0), 4, java.math.RoundingMode.HALF_UP)
+                : BigDecimal.valueOf(0.10);
+        BigDecimal platformCommission = totalRevenue.multiply(commissionRate);
         BigDecimal transactionFee = BigDecimal.valueOf(bookings.size() * 5.00); // Rs. 5 per booking
         BigDecimal settlementAmount = totalRevenue.subtract(platformCommission).subtract(transactionFee);
 

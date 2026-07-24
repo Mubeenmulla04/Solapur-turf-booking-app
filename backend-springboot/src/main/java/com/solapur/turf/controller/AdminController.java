@@ -1,12 +1,17 @@
 package com.solapur.turf.controller;
 
 import com.solapur.turf.dto.ApiResponse;
+import com.solapur.turf.dto.BroadcastNotificationRequest;
+import com.solapur.turf.dto.RejectOwnerRequest;
 import com.solapur.turf.entity.AuditLog;
 import com.solapur.turf.entity.PlatformSettings;
 import com.solapur.turf.service.AdminService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.solapur.turf.service.DatabaseBackupService;
 
 import java.util.List;
 import java.util.Map;
@@ -19,11 +24,12 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
     private final AdminService adminService;
-
     private final com.solapur.turf.service.TurfService turfService;
+    private final DatabaseBackupService backupService;
 
     // ── Platform Stats ────────────────────────────────────────────────────────
 
@@ -41,9 +47,9 @@ public class AdminController {
     // ── Broadcast Notifications ───────────────────────────────────────────────
     @PostMapping("/notifications/broadcast")
     public ResponseEntity<ApiResponse<Map<String, Object>>> broadcastNotification(
-            @RequestBody Map<String, String> body) {
+            @Valid @RequestBody BroadcastNotificationRequest request) {
         return ResponseEntity.ok(ApiResponse.success(
-                adminService.broadcastNotification(body.get("title"), body.get("message"), body.get("audience")),
+                adminService.broadcastNotification(request.getTitle(), request.getMessage(), request.getAudience()),
                 "Broadcast queued successfully"));
     }
 
@@ -55,7 +61,7 @@ public class AdminController {
 
     @PutMapping("/settings")
     public ResponseEntity<ApiResponse<PlatformSettings>> updateSettings(
-            @RequestBody PlatformSettings settings) {
+            @Valid @RequestBody PlatformSettings settings) {
         return ResponseEntity.ok(ApiResponse.success(adminService.updateSettings(settings), "Settings updated"));
     }
 
@@ -63,6 +69,15 @@ public class AdminController {
     @GetMapping("/audit-log")
     public ResponseEntity<ApiResponse<List<AuditLog>>> getAuditLog() {
         return ResponseEntity.ok(ApiResponse.success(adminService.getAuditLog(), "Audit log retrieved"));
+    }
+
+    @PostMapping("/backups/trigger")
+    public ResponseEntity<ApiResponse<String>> triggerBackup() {
+        String result = backupService.runBackupFlow();
+        if (result.contains("failed")) {
+            return ResponseEntity.status(500).body(ApiResponse.error(result));
+        }
+        return ResponseEntity.ok(ApiResponse.success(result, "Backup completed"));
     }
 
     // ── Turf Management ───────────────────────────────────────────────────────
@@ -78,6 +93,24 @@ public class AdminController {
             @PathVariable UUID turfId,
             @RequestParam boolean isActive) {
         return ResponseEntity.ok(ApiResponse.success(turfService.mapToDto(adminService.toggleTurfStatus(turfId, isActive)), "Turf status updated"));
+    }
+
+    /**
+     * Toggle Featured (Sponsored) status of a turf.
+     *
+     * This is a paid add-on (₹199/month) available to ALL owners — both TRIAL and ACTIVE.
+     * The free trial does NOT include Featured status automatically.
+     * Admin toggles this manually after verifying the owner has paid ₹199 for the add-on.
+     *
+     * Audit log records the owner's subscription status at the time of toggle.
+     */
+    @PutMapping("/turfs/{turfId}/featured")
+    public ResponseEntity<ApiResponse<com.solapur.turf.dto.TurfListingDto>> toggleTurfFeatured(
+            @PathVariable UUID turfId,
+            @RequestParam boolean isFeatured) {
+        return ResponseEntity.ok(ApiResponse.success(
+                turfService.mapToDto(adminService.toggleTurfFeatured(turfId, isFeatured)),
+                isFeatured ? "Turf marked as Featured (Sponsored)" : "Turf removed from Featured listings"));
     }
 
     // ── Owner Approval ────────────────────────────────────────────────────────
@@ -98,8 +131,8 @@ public class AdminController {
     @PutMapping("/owners/{ownerId}/reject")
     public ResponseEntity<ApiResponse<Map<String, Object>>> rejectOwner(
             @PathVariable UUID ownerId,
-            @RequestBody(required = false) Map<String, String> body) {
-        String reason = body != null ? body.getOrDefault("reason", "Application rejected") : "Application rejected";
-        return ResponseEntity.ok(ApiResponse.success(adminService.rejectOwner(ownerId, reason), "Owner rejected"));
+            @Valid @RequestBody RejectOwnerRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(
+                adminService.rejectOwner(ownerId, request.getReason()), "Owner rejected"));
     }
 }

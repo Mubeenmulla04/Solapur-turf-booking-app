@@ -84,4 +84,17 @@ public class TurfOwner extends BaseEntity {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private boolean isActive = true;
+
+    @Column(name = "trial_starts_at")
+    private java.time.LocalDateTime trialStartsAt;
+
+    @Column(name = "trial_ends_at")
+    private java.time.LocalDateTime trialEndsAt;
+
+    @Column(name = "subscription_expires_at")
+    private java.time.LocalDateTime subscriptionExpiresAt;
+
+    @Column(name = "subscription_status", nullable = false, columnDefinition = "varchar(255) default 'TRIAL'")
+    @Builder.Default
+    private String subscriptionStatus = "TRIAL";
 }

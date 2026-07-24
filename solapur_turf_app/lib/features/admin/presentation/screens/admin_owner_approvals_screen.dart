@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'admin_dashboard_screen.dart';
 
 // â”€â”€ Provider for fetching pending owners â”€â”€
 final pendingOwnersProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
@@ -127,6 +129,7 @@ class _OwnerRequestCardState extends ConsumerState<_OwnerRequestCard> {
         _showSnack('Owner request rejected.', isError: false);
       }
       ref.invalidate(pendingOwnersProvider);
+      ref.invalidate(adminStatsProvider);
     } on DioException catch (e) {
       _showSnack(e.response?.data?['message'] ?? 'Failed to process request', isError: true);
     } finally {
@@ -142,6 +145,100 @@ class _OwnerRequestCardState extends ConsumerState<_OwnerRequestCard> {
     ));
   }
 
+  void _viewDocument(BuildContext context, String relativeUrl) {
+    if (relativeUrl.isEmpty) return;
+    final baseDomain = AppConstants.apiBaseUrl.replaceAll('/api', '');
+    final fullUrl = relativeUrl.startsWith('http') ? relativeUrl : '$baseDomain$relativeUrl';
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: InteractiveViewer(
+                child: Image.network(
+                  fullUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const SizedBox(
+                      height: 300,
+                      child: Center(child: CircularProgressIndicator(color: Colors.white)),
+                    );
+                  },
+                  errorBuilder: (c, e, s) => Container(
+                    height: 200,
+                    color: Colors.white,
+                    alignment: Alignment.center,
+                    child: const Text('Failed to load document preview', style: TextStyle(color: AppColors.error)),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDocumentSection(BuildContext context) {
+    final docs = widget.owner['verificationDocuments'] as Map<String, dynamic>? ?? {};
+    if (docs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text('No documents uploaded yet.', style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8), fontStyle: FontStyle.italic)),
+      );
+    }
+
+    final docList = [
+      {'key': 'panDoc', 'label': 'PAN Card'},
+      {'key': 'gstDoc', 'label': 'GST Cert.'},
+      {'key': 'leaseDoc', 'label': 'Lease Agree.'},
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: docList.map((d) {
+          final url = docs[d['key']]?.toString();
+          final isUploaded = url != null && url.isNotEmpty;
+
+          return ActionChip(
+            avatar: Icon(
+              isUploaded ? Icons.description_rounded : Icons.warning_amber_rounded,
+              size: 14,
+              color: isUploaded ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
+            ),
+            label: Text(
+              d['label']!,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isUploaded ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+              ),
+            ),
+            backgroundColor: isUploaded ? const Color(0xFFE2F8F0) : const Color(0xFFF1F5F9),
+            onPressed: isUploaded ? () => _viewDocument(context, url) : null,
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final businessName = widget.owner['businessName'] ?? 'No Business Name';
@@ -150,6 +247,8 @@ class _OwnerRequestCardState extends ConsumerState<_OwnerRequestCard> {
     final phone = widget.owner['contactNumber'] ?? widget.owner['userPhone'] ?? '';
     final city = widget.owner['city'] ?? 'No City';
     final state = widget.owner['state'] ?? 'No State';
+    final gst = widget.owner['gstNumber'] ?? 'Not provided';
+    final pan = widget.owner['panNumber'] ?? 'Not provided';
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -225,8 +324,15 @@ class _OwnerRequestCardState extends ConsumerState<_OwnerRequestCard> {
           _InfoNode(icon: Icons.alternate_email_rounded, label: 'Email Address', value: email),
           _InfoNode(icon: Icons.phone_outlined, label: 'Contact Number', value: phone),
           _InfoNode(icon: Icons.location_on_outlined, label: 'Location', value: '$city, $state'),
+          _InfoNode(icon: Icons.percent_rounded, label: 'GST Number', value: gst),
+          _InfoNode(icon: Icons.badge_outlined, label: 'PAN Number', value: pan),
 
-          const Gap(32),
+          const Gap(16),
+          const Text('Verification Documents', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 0.5)),
+          const Gap(4),
+          _buildDocumentSection(context),
+
+          const Gap(24),
 
           // ── Actions ──
           if (_isLoading)

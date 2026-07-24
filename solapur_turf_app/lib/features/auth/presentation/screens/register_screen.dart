@@ -32,9 +32,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   final _bizPhoneCtrl = TextEditingController();
   final _addr1Ctrl    = TextEditingController();
   final _addr2Ctrl    = TextEditingController();
-  final _cityCtrl     = TextEditingController();
-  final _stateCtrl    = TextEditingController();
-  final _pinCtrl      = TextEditingController();
   final _upiCtrl      = TextEditingController();
   final _bankAccCtrl  = TextEditingController();
   final _ifscCtrl     = TextEditingController();
@@ -60,8 +57,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
   void dispose() {
     _nameCtrl.dispose(); _emailCtrl.dispose(); _phoneCtrl.dispose();
     _passwordCtrl.dispose(); _bizNameCtrl.dispose(); _bizPhoneCtrl.dispose();
-    _addr1Ctrl.dispose(); _addr2Ctrl.dispose(); _cityCtrl.dispose();
-    _stateCtrl.dispose(); _pinCtrl.dispose(); _upiCtrl.dispose();
+    _addr1Ctrl.dispose(); _addr2Ctrl.dispose(); _upiCtrl.dispose();
     _bankAccCtrl.dispose(); _ifscCtrl.dispose(); _gstCtrl.dispose();
     _panCtrl.dispose(); _animCtrl.dispose();
     super.dispose();
@@ -98,9 +94,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
       contactNumber:     _v(_bizPhoneCtrl),
       addressLine1:      _v(_addr1Ctrl),
       addressLine2:      _v(_addr2Ctrl),
-      city:              _v(_cityCtrl),
-      stateProvince:     _v(_stateCtrl),
-      pinCode:           _v(_pinCtrl),
+      city:              'Solapur',       // Auto-set: app is Solapur-specific
+      stateProvince:     'Maharashtra',   // Auto-set: app is Solapur-specific
+      pinCode:           '413001',        // Auto-set: Solapur PIN
       upiId:             _v(_upiCtrl),
       bankAccountNumber: _v(_bankAccCtrl),
       ifscCode:          _v(_ifscCtrl),
@@ -123,13 +119,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             HapticFeedback.vibrate();
             _showErrorSnack(e.message);
           },
+          // USER registration succeeds → go to dashboard
           authenticated: (s) {
             HapticFeedback.heavyImpact();
-            if (s.user.role.name.toUpperCase() == 'OWNER') {
-              _showPendingDialog();
-            } else {
-              context.go('/user/dashboard');
-            }
+            context.go('/user/dashboard');
+          },
+          // OWNER registration → show pending dialog (state is pendingApproval, NOT authenticated)
+          // This means GoRouter will NEVER redirect to /owner/dashboard
+          pendingApproval: (_) {
+            HapticFeedback.heavyImpact();
+            _showPendingDialog();
           },
         );
       });
@@ -373,31 +372,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                     textCapitalization: TextCapitalization.sentences,
                   ),
                   const Gap(16),
-                  Row(children: [
-                    Expanded(child: AuthTextField(
-                      label: 'CITY *', hint: 'Solapur', controller: _cityCtrl,
-                      validator: (v) => AppValidators.required(v, fieldName: 'City'),
-                      prefixIcon: Icons.location_city_outlined, enabled: !isLoading,
-                      textCapitalization: TextCapitalization.words,
-                    )),
-                    const Gap(12),
-                    Expanded(child: AuthTextField(
-                      label: 'STATE *', hint: 'Maharashtra', controller: _stateCtrl,
-                      validator: (v) => AppValidators.required(v, fieldName: 'State'),
-                      prefixIcon: Icons.map_outlined, enabled: !isLoading,
-                      textCapitalization: TextCapitalization.words,
-                    )),
-                  ]),
-                  const Gap(16),
-                  AuthTextField(
-                    label: 'PIN CODE *', hint: '413001', controller: _pinCtrl,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'PIN code required';
-                      if (!RegExp(r'^\d{6}$').hasMatch(v)) return 'Enter valid 6-digit PIN';
-                      return null;
-                    },
-                    keyboardType: TextInputType.number,
-                    prefixIcon: Icons.pin_drop_outlined, enabled: !isLoading,
+                  // City/State/PIN are fixed for Solapur — shown as informational chip
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
+                    ),
+                    child: const Row(children: [
+                      Icon(Icons.location_city_rounded, color: Color(0xFF059669), size: 18),
+                      Gap(10),
+                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('Location', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF059669), letterSpacing: 0.8)),
+                        Gap(2),
+                        Text('Solapur, Maharashtra — 413001', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                      ]),
+                    ]),
                   ),
                 ]),
               ),
@@ -486,7 +478,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(0.5), // Softer background
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (_) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
@@ -495,15 +487,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             color: Colors.white,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
-            boxShadow: [BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.1), blurRadius: 40, offset: const Offset(0, 10))],
+            boxShadow: [BoxShadow(color: const Color(0xFF0F172A).withValues(alpha: 0.1), blurRadius: 40, offset: const Offset(0, 10))],
           ),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.orange.withOpacity(0.3), width: 1.5),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.3), width: 1.5),
                 shape: BoxShape.circle,
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
               ),
               child: const Icon(Icons.pending_actions_rounded, color: Colors.orange, size: 48),
             ),
@@ -524,6 +516,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               isLoading: false,
               onPressed: () {
                 Navigator.of(context).pop();
+                // Use resetToUnauthenticated() — NOT logout().
+                // logout() makes an API call which fails for OWNER (no token → 401 error).
+                // resetToUnauthenticated() instantly sets state to unauthenticated,
+                // guaranteed to work even with no network / no token.
+                ref.read(authNotifierProvider.notifier).resetToUnauthenticated();
                 context.go('/auth/login');
               },
             ),

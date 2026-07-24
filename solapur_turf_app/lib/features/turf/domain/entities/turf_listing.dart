@@ -85,6 +85,7 @@ class TurfListing with _$TurfListing {
     double? latitude,
     double? longitude,
     List<String>? imageUrls,
+    @Default(false) bool isFeatured,
   }) = _TurfListing;
 }
 

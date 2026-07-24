@@ -40,6 +40,13 @@ public class ReviewService {
             throw new ApiException("You have already reviewed this turf", HttpStatus.CONFLICT);
         }
 
+        // Authorization: user must have at least one booking at this turf to review it
+        boolean hasBooking = bookingRepository.existsByUserIdAndTurfId(userId, turfId);
+        if (!hasBooking) {
+            throw new ApiException(
+                "You can only review a turf you have booked", HttpStatus.FORBIDDEN);
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
         TurfListing turf = turfListingRepository.findById(turfId)

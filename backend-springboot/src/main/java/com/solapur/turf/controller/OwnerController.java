@@ -1,117 +1,109 @@
 package com.solapur.turf.controller;
 
 import com.solapur.turf.dto.ApiResponse;
-import com.solapur.turf.entity.TurfListing;
-import com.solapur.turf.entity.TurfOwner;
-import com.solapur.turf.repository.TurfListingRepository;
-import com.solapur.turf.repository.TurfOwnerRepository;
+import com.solapur.turf.dto.UpdateOwnerProfileRequest;
 import com.solapur.turf.security.CustomUserDetails;
+import com.solapur.turf.service.OwnerService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import org.springframework.core.env.Environment;
+import com.razorpay.RazorpayClient;
+import com.razorpay.Order;
+import org.json.JSONObject;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/owners")
 @RequiredArgsConstructor
 public class OwnerController {
 
-    private final TurfOwnerRepository turfOwnerRepository;
-    private final TurfListingRepository turfListingRepository;
+    private final OwnerService ownerService;
+    private final Environment env;
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Optional<TurfOwner> ownerOpt = turfOwnerRepository.findByUserId(userDetails.getUser().getId());
-
-        if (ownerOpt.isEmpty()) {
-            return ResponseEntity.ok(ApiResponse.success(new LinkedHashMap<>(), "No active TurfOwner profile"));
-        }
-
-        TurfOwner owner = ownerOpt.get();
-
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("ownerId", owner.getId());
-        data.put("businessName", owner.getBusinessName());
-        data.put("contactNumber", owner.getContactNumber());
-        data.put("addressLine1", owner.getAddressLine1());
-        data.put("addressLine2", owner.getAddressLine2());
-        data.put("city", owner.getCity());
-        data.put("state", owner.getState());
-        data.put("pinCode", owner.getPinCode());
-        data.put("upiId", owner.getUpiId());
-        data.put("bankAccountNumber", owner.getBankAccountNumber());
-        data.put("ifscCode", owner.getIfscCode());
-        data.put("verificationStatus", owner.getVerificationStatus().name());
-        data.put("totalEarnings", owner.getTotalEarnings());
-        data.put("pendingSettlement", owner.getPendingSettlement());
-        data.put("isActive", owner.isActive());
-
-        // Add turf IDs
-        List<TurfListing> turfs = turfListingRepository.findByOwnerId(owner.getId());
-        data.put("turfIds", turfs.stream().map(TurfListing::getId).toList());
-
-        return ResponseEntity.ok(ApiResponse.success(data, "Owner profile retrieved"));
+        Map<String, Object> profile = ownerService.getOwnerProfile(userDetails.getUser());
+        return ResponseEntity.ok(ApiResponse.success(profile, "Owner profile retrieved"));
     }
 
     @PutMapping("/me")
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody Map<String, String> requestData) {
+            @Valid @RequestBody UpdateOwnerProfileRequest requestData) {
+        // Convert validated DTO → Map for the existing service layer
+        Map<String, Object> dataMap = new java.util.LinkedHashMap<>();
+        if (requestData.getBusinessName()     != null) dataMap.put("businessName",      requestData.getBusinessName());
+        if (requestData.getPhone()            != null) dataMap.put("contactNumber",      requestData.getPhone());
+        if (requestData.getAddress()          != null) dataMap.put("addressLine1",       requestData.getAddress());
+        if (requestData.getCity()             != null) dataMap.put("city",               requestData.getCity());
+        if (requestData.getPanNumber()        != null) dataMap.put("panNumber",          requestData.getPanNumber());
+        if (requestData.getGstNumber()        != null) dataMap.put("gstNumber",          requestData.getGstNumber());
+        if (requestData.getBankAccountNumber()!= null) dataMap.put("bankAccountNumber",  requestData.getBankAccountNumber());
+        if (requestData.getIfscCode()         != null) dataMap.put("ifscCode",           requestData.getIfscCode());
+        if (requestData.getBankName()         != null) dataMap.put("bankName",           requestData.getBankName());
+        Map<String, Object> profile = ownerService.updateOwnerProfile(userDetails.getUser(), dataMap);
+        return ResponseEntity.ok(ApiResponse.success(profile, "Owner profile updated"));
+    }
 
-        Optional<TurfOwner> ownerOpt = turfOwnerRepository.findByUserId(userDetails.getUser().getId());
-        TurfOwner owner = ownerOpt.orElseGet(() -> {
-            TurfOwner newOwner = new TurfOwner();
-            newOwner.setUser(userDetails.getUser());
-            newOwner.setBusinessName("Your Business");
-            newOwner.setContactNumber("Not Set");
-            newOwner.setAddressLine1("Not Set");
-            newOwner.setCity("Not Set");
-            newOwner.setState("Not Set");
-            newOwner.setPinCode("Not Set");
-            newOwner.setUpiId("Not Set");
-            newOwner.setVerificationStatus(com.solapur.turf.enums.VerificationStatus.PENDING);
-            return newOwner;
-        });
+    /**
+     * Creates a Razorpay order for ₹699 monthly subscription.
+     * Flutter opens Razorpay checkout after getting this order ID.
+     */
+    @PostMapping("/me/subscription/order")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createSubscriptionOrder(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        try {
+            String keyId = env.getProperty("razorpay.key.id");
+            String keySecret = env.getProperty("razorpay.key.secret");
 
-        if (requestData.containsKey("contactNumber")) {
-            owner.setContactNumber(requestData.get("contactNumber"));
-        }
-        if (requestData.containsKey("businessName")) {
-            owner.setBusinessName(requestData.get("businessName"));
-        }
-        if (requestData.containsKey("upiId")) {
-            owner.setUpiId(requestData.get("upiId"));
-        }
-        if (requestData.containsKey("bankAccountNumber")) {
-            owner.setBankAccountNumber(requestData.get("bankAccountNumber"));
-        }
-        if (requestData.containsKey("ifscCode")) {
-            owner.setIfscCode(requestData.get("ifscCode"));
-        }
-        if (requestData.containsKey("addressLine1")) {
-            owner.setAddressLine1(requestData.get("addressLine1"));
-        }
-        if (requestData.containsKey("addressLine2")) {
-            owner.setAddressLine2(requestData.get("addressLine2"));
-        }
-        if (requestData.containsKey("city")) {
-            owner.setCity(requestData.get("city"));
-        }
-        if (requestData.containsKey("state")) {
-            owner.setState(requestData.get("state"));
-        }
-        if (requestData.containsKey("pinCode")) {
-            owner.setPinCode(requestData.get("pinCode"));
-        }
+            if (keyId == null || keyId.isBlank() || keySecret == null || keySecret.isBlank()) {
+                return ResponseEntity.status(503).body(ApiResponse.error("Payment gateway not configured"));
+            }
 
-        turfOwnerRepository.save(owner);
+            RazorpayClient razorpayClient = new RazorpayClient(keyId, keySecret);
+            JSONObject orderRequest = new JSONObject();
+            orderRequest.put("amount", 69900); // ₹699 in paise
+            orderRequest.put("currency", "INR");
+            orderRequest.put("receipt", "sub_" + userDetails.getUser().getId().toString().substring(0, 8));
+            orderRequest.put("notes", new JSONObject().put("purpose", "Monthly Subscription"));
+            Order order = razorpayClient.orders.create(orderRequest);
 
-        return getMyProfile(userDetails);
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("orderId", order.get("id"));
+            response.put("amount", 69900);
+            response.put("currency", "INR");
+            response.put("keyId", keyId);
+            return ResponseEntity.ok(ApiResponse.success(response, "Subscription order created"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.error("Failed to create order: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/me/renew")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> renewSubscription(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody(required = false) Map<String, String> body) {
+        String keySecret = env.getProperty("razorpay.key.secret");
+        if (keySecret == null || keySecret.isBlank()) {
+            return ResponseEntity.status(503).body(ApiResponse.error("Payment gateway not configured"));
+        }
+        Map<String, Object> profile = ownerService.renewSubscription(userDetails.getUser(), body, keySecret);
+        return ResponseEntity.ok(ApiResponse.success(profile, "Subscription renewed successfully"));
+    }
+
+    @PostMapping("/me/documents")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadVerificationDocument(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("documentType") String documentType) {
+        Map<String, Object> profile = ownerService.uploadVerificationDocument(userDetails.getUser(), file, documentType);
+        return ResponseEntity.ok(ApiResponse.success(profile, "Verification document uploaded successfully"));
     }
 }

@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/network/api_client.dart';
 import '../../domain/entities/booking.dart';
 import '../providers/booking_provider.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
 
 class BookingHistoryScreen extends ConsumerWidget {
   const BookingHistoryScreen({super.key});
@@ -98,7 +99,7 @@ class _BookingTicketCardState extends ConsumerState<_BookingTicketCard> {
   Future<void> _cancelBooking() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogCtx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Cancel Booking',
             style: TextStyle(fontWeight: FontWeight.bold)),
@@ -106,11 +107,11 @@ class _BookingTicketCardState extends ConsumerState<_BookingTicketCard> {
             'Are you sure you want to cancel this booking? This cannot be undone.'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
             child: const Text('Keep It'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.error,
                 shape: RoundedRectangleBorder(
@@ -125,6 +126,7 @@ class _BookingTicketCardState extends ConsumerState<_BookingTicketCard> {
     try {
       await ref.read(bookingNotifierProvider.notifier).cancelBooking(booking.bookingId);
       ref.invalidate(myBookingsProvider);
+      ref.invalidate(userProfileProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Booking cancelled successfully'),
@@ -148,7 +150,7 @@ class _BookingTicketCardState extends ConsumerState<_BookingTicketCard> {
   void _showQrPass() {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Text('Booking Pass',
@@ -169,15 +171,15 @@ class _BookingTicketCardState extends ConsumerState<_BookingTicketCard> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.qr_code_2_rounded,
-                        size: 80, color: AppColors.primaryDark),
+                      size: 80, color: AppColors.primaryDark),
                     const Gap(4),
                     Text(
                       '#${booking.bookingId.substring(0, 8).toUpperCase()}',
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          letterSpacing: 1.5,
-                          color: AppColors.primaryDark),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        letterSpacing: 1.5,
+                        color: AppColors.primaryDark),
                     ),
                   ],
                 ),
@@ -201,7 +203,7 @@ class _BookingTicketCardState extends ConsumerState<_BookingTicketCard> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Close',
                 style: TextStyle(color: AppColors.primary)),
           )
@@ -465,9 +467,35 @@ class _BookingTicketCardState extends ConsumerState<_BookingTicketCard> {
                               ),
                         ],
                       )
-                    : StatusChip(
-                        label: booking.bookingStatus.label,
-                        color: _statusColor,
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          StatusChip(
+                            label: booking.bookingStatus.label,
+                            color: _statusColor,
+                          ),
+                          if (isCompleted) ...[
+                            const Gap(8),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                context.pushNamed(
+                                  'submitReview',
+                                  pathParameters: {'turfId': booking.turfId},
+                                  extra: {'turfName': booking.turfName},
+                                );
+                              },
+                              icon: const Icon(Icons.star_rounded, size: 14, color: Colors.white),
+                              label: const Text('Rate', style: TextStyle(fontSize: 12, color: Colors.white)),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                 ],
               ),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -51,17 +52,41 @@ import 'shell_screens.dart';
 
 part 'app_router.g.dart';
 
+class RouterListenable extends ChangeNotifier {
+  final Ref _ref;
+
+  RouterListenable(this._ref) {
+    _ref.listen<AsyncValue<AuthState>>(
+      authNotifierProvider,
+      (previous, next) {
+        // Only notify GoRouter to evaluate redirect rules when the AuthState variant changes.
+        // Prevents route resets on simple loading transitions.
+        if (previous?.valueOrNull.runtimeType != next.valueOrNull.runtimeType) {
+          notifyListeners();
+        }
+      },
+    );
+  }
+}
+
 @riverpod
 GoRouter appRouter(Ref ref) {
-
-  final authState = ref.watch(authNotifierProvider);
+  final listenable = RouterListenable(ref);
+  ref.onDispose(listenable.dispose);
 
   return GoRouter(
     initialLocation: '/splash',
     debugLogDiagnostics: true,
+    refreshListenable: listenable,
     redirect: (context, state) {
-      final isAuthenticated = authState.valueOrNull?.isAuthenticated ?? false;
-      final role = authState.valueOrNull?.role;
+      final authState = ref.read(authNotifierProvider).valueOrNull;
+      
+      // If authState is null, it means the AuthNotifier build() is still checking secure storage.
+      // Do not redirect to login yet.
+      if (authState == null) return null;
+
+      final isAuthenticated = authState.isAuthenticated;
+      final role = authState.role;
       final onAuthPage = state.uri.path.startsWith('/auth');
 
       if (!isAuthenticated && !onAuthPage) return '/auth/login';

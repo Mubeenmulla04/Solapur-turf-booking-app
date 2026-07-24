@@ -8,13 +8,14 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'owner_dynamic_pricing_screen.dart';
 import 'owner_analytics_screen.dart';
 import 'owner_settlement_screen.dart';
 
 // ── Owner Stats Provider ─────────────────────────────────────────────────────
 
-final _ownerStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+final ownerStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final dio = ref.watch(apiClientProvider);
   try {
     // Fetch live profile and actual backend stats in parallel
@@ -37,6 +38,9 @@ final _ownerStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((re
         'weeklyRevenue': statsData['weeklyRevenue'] ?? 0,
         'occupancyRate': statsData['occupancyRate'] ?? 0,
         'pendingSettlements': statsData['pendingSettlements'] ?? 0,
+        'subscriptionStatus': meData['subscriptionStatus'] ?? 'TRIAL',
+        'trialEndsAt': meData['trialEndsAt'],
+        'subscriptionExpiresAt': meData['subscriptionExpiresAt'],
       };
     }
     throw Exception('No data');
@@ -46,25 +50,182 @@ final _ownerStatsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((re
       'weeklyRevenue': 0,
       'occupancyRate': 0,
       'pendingSettlements': 0,
+      'subscriptionStatus': 'TRIAL',
     };
   }
 });
 
-class OwnerDashboardScreen extends ConsumerWidget {
+class OwnerDashboardScreen extends ConsumerStatefulWidget {
   const OwnerDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OwnerDashboardScreen> createState() => _OwnerDashboardScreenState();
+}
+
+class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
+  late Razorpay _razorpay;
+
+  @override
+  void initState() {
+    super.initState();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    try {
+      final dio = ref.read(apiClientProvider);
+      await dio.post('/owners/me/renew', data: {
+        'razorpayPaymentId': response.paymentId,
+        'razorpayOrderId': response.orderId,
+        'razorpaySignature': response.signature,
+      });
+      ref.invalidate(ownerStatsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Subscription renewed successfully! Your listings are now active.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Activation failed: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Payment failed: ${response.message}'), backgroundColor: AppColors.error),
+      );
+    }
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {}
+
+  Future<void> _openSubscriptionPayment() async {
+    try {
+      final dio = ref.read(apiClientProvider);
+      final res = await dio.post('/owners/me/subscription/order');
+      final data = res.data['data'] as Map<String, dynamic>;
+      final options = {
+        'key': data['keyId'] ?? 'rzp_test_1DP5mmOlF5G5ag',
+        'amount': data['amount'] ?? 69900,
+        'name': 'Solapur Turf Platform',
+        'description': 'Monthly Subscription — ₹699/month',
+        'order_id': data['orderId'],
+        'prefill': {'contact': '', 'email': ''},
+        'theme': {'color': '#4CAF50'},
+      };
+      _razorpay.open(options);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not initiate payment: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
-    final statsAsync = ref.watch(_ownerStatsProvider);
+    final statsAsync = ref.watch(ownerStatsProvider);
     final authState = ref.watch(authNotifierProvider);
     final ownerName = authState.valueOrNull?.user?.fullName.split(' ').first ?? 'Partner';
+
+    if (statsAsync.valueOrNull != null) {
+      final stats = statsAsync.valueOrNull!;
+      final subStatus = stats['subscriptionStatus'] ?? 'TRIAL';
+      
+      if (subStatus == 'EXPIRED') {
+        return Scaffold(
+          backgroundColor: AppColors.backgroundLight,
+          body: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.error.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.block_rounded, size: 64, color: AppColors.error),
+                  ),
+                  const Gap(24),
+                  const Text(
+                    'Subscription Expired',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight),
+                  ),
+                  const Gap(12),
+                  const Text(
+                    'Your free trial has completed. To reactivate your turf listings and continue receiving bookings, please renew your monthly subscription.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, color: AppColors.textSecondaryLight, height: 1.5),
+                  ),
+                  const Gap(32),
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceLight,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.dividerLight),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Monthly Plan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        Text('₹699 / month', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.primary)),
+                      ],
+                    ),
+                  ),
+                  const Gap(32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: () => _openSubscriptionPayment(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Renew Subscription (₹699)', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const Gap(16),
+                  TextButton(
+                    onPressed: () {
+                      ref.read(authNotifierProvider.notifier).logout();
+                      context.go('/login');
+                    },
+                    child: const Text('Logout', style: TextStyle(color: AppColors.textSecondaryLight)),
+                  )
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+    }
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: () async => ref.invalidate(_ownerStatsProvider),
+          onRefresh: () async => ref.invalidate(ownerStatsProvider),
           color: AppColors.primary,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -105,6 +266,10 @@ class OwnerDashboardScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+
+              if (statsAsync.valueOrNull != null) ...[
+                _buildTrialBanner(context, ref, statsAsync.valueOrNull!),
+              ],
 
               const SliverToBoxAdapter(child: Gap(16)),
 
@@ -532,6 +697,51 @@ class OwnerDashboardScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildTrialBanner(BuildContext context, WidgetRef ref, Map<String, dynamic> stats) {
+    final subStatus = stats['subscriptionStatus'] ?? 'TRIAL';
+    final trialEndsAtStr = stats['trialEndsAt'];
+    if (subStatus != 'TRIAL' || trialEndsAtStr == null) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+    try {
+      final trialEndsAt = DateTime.parse(trialEndsAtStr);
+      final daysLeft = trialEndsAt.difference(DateTime.now()).inDays;
+      if (daysLeft < 0 || daysLeft > 10) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 20),
+                const Gap(12),
+                Expanded(
+                  child: Text(
+                    'Your free trial ends in $daysLeft days. Renew now to avoid any booking interruption.',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimaryLight),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => _openSubscriptionPayment(),
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
+                  child: const Text('Activate', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (_) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
   }
 }
 

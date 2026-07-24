@@ -19,9 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.context.annotation.Profile;
+
 @RestController
 @RequestMapping("/api/test")
 @RequiredArgsConstructor
+@Profile("!prod")
 public class TestSeederController {
 
     private final UserRepository userRepository;

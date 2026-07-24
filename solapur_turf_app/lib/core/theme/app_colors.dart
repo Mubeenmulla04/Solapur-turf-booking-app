@@ -5,12 +5,12 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primary: Deep Saturated Green (Provides trust & energy)
-  static const Color primary = Color(0xFF0E7C61);
-  static const Color primaryDark = Color(0xFF064E3B); // Dark theme primary container
+  // Primary: Neon Green (Brand consistency across auth and dashboards)
+  static const Color primary = Color(0xFF10B981);
+  static const Color primaryDark = Color(0xFF047857); // Dark theme primary container
   static const Color primaryLight = Color(0xFF34D399); // Active elements, borders
-  static const Color primaryContainer = Color(0xFFE6F5F2); // Pale green (Light theme chips)
-
+  static const Color primaryContainer = Color(0xFFECFDF5); // Pale green (Light theme chips)
+  
   // Secondary/Accent: Soft Coral/Orange (Used strictly for warnings, "Few slots left")
   static const Color secondary = Color(0xFFF97316);
   static const Color secondaryContainer = Color(0xFFFFEDD5);

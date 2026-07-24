@@ -104,7 +104,11 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = secretKey.getBytes();
+        byte[] keyBytes = (secretKey != null ? secretKey : "").getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            String defaultKey = "solapur-turf-booking-app-secure-jwt-secret-key-256-bits!";
+            keyBytes = defaultKey.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        }
         return Keys.hmacShaKeyFor(keyBytes);
     }
 }

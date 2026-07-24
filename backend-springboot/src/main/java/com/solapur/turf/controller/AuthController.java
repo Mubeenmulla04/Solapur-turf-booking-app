@@ -104,12 +104,8 @@ public class AuthController {
     // ─── POST /api/auth/forgot-password/request ───────────────────────────────
     @PostMapping("/forgot-password/request")
     public ResponseEntity<ApiResponse<Object>> requestForgotPassword(
-            @RequestBody java.util.Map<String, String> body) {
-        String email = body.get("email");
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email is required");
-        }
-        authService.sendForgotPasswordOtp(email);
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        authService.sendForgotPasswordOtp(request.getEmail());
         return ResponseEntity.ok(ApiResponse.success(null, "OTP sent to your email"));
     }
 

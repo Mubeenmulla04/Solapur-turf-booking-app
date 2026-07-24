@@ -123,7 +123,7 @@ class _AdminBookingTile extends ConsumerWidget {
     final turf = j['turf'] as Map<String, dynamic>? ?? {};
     final status = j['booking_status'] as String? ?? j['bookingStatus'] as String? ?? '';
     final payStatus = j['payment_status'] as String? ?? j['paymentStatus'] as String? ?? '';
-    final amount = double.tryParse((j['total_amount'] ?? j['totalAmount'] ?? 0).toString()) ?? 0;
+    final amount = double.tryParse((j['final_amount'] ?? j['finalAmount'] ?? j['total_amount'] ?? j['totalAmount'] ?? 0).toString()) ?? 0;
     final date = j['booking_date'] as String? ?? j['bookingDate'] as String? ?? '';
     final bookingId = j['booking_id'] as String? ?? j['bookingId'] as String? ?? '';
 

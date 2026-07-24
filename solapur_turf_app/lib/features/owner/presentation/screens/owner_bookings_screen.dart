@@ -9,6 +9,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import 'owner_dashboard_screen.dart';
 
 final _ownerBookingsProvider =
     FutureProvider.autoDispose<List<_OwnerBookingItem>>((ref) async {
@@ -143,7 +144,7 @@ class OwnerBookingsScreen extends ConsumerWidget {
                     subtitle: 'Paid bookings for your turfs will populate here.',
                   )
                 : RefreshIndicator(
-                    onRefresh: () async => ref.invalidate(_ownerBookingsProvider),
+                    onRefresh: () async => await ref.refresh(_ownerBookingsProvider.future),
                     color: AppColors.primary,
                     child: CustomScrollView(
                       slivers: [
@@ -153,7 +154,10 @@ class OwnerBookingsScreen extends ConsumerWidget {
                             delegate: SliverChildBuilderDelegate(
                               (context, i) => Padding(
                                 padding: const EdgeInsets.only(bottom: 16),
-                                child: _OwnerBookingCard(item: bookings[i]),
+                                child: _OwnerBookingCard(
+                                  key: ValueKey(bookings[i].bookingId),
+                                  item: bookings[i],
+                                ),
                               ),
                               childCount: bookings.length,
                             ),
@@ -171,14 +175,14 @@ class OwnerBookingsScreen extends ConsumerWidget {
 
 class _OwnerBookingCard extends ConsumerWidget {
   final _OwnerBookingItem item;
-  const _OwnerBookingCard({required this.item});
+  const _OwnerBookingCard({super.key, required this.item});
 
   Future<void> _cancelBooking(BuildContext context, WidgetRef ref) async {
     HapticFeedback.lightImpact();
     final reasonCtrl = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (dialogCtx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Row(children: [
           Icon(Icons.cancel_outlined, color: AppColors.error),
@@ -207,7 +211,7 @@ class _OwnerBookingCard extends ConsumerWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
             child: const Text('Keep Booking'),
           ),
           ElevatedButton(
@@ -216,7 +220,7 @@ class _OwnerBookingCard extends ConsumerWidget {
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
             child: const Text('Cancel It'),
           ),
         ],
@@ -228,7 +232,8 @@ class _OwnerBookingCard extends ConsumerWidget {
         '/bookings/${item.bookingId}/cancel',
         data: {'reason': reasonCtrl.text.trim().isNotEmpty ? reasonCtrl.text.trim() : 'Cancelled by owner'},
       );
-      ref.invalidate(_ownerBookingsProvider);
+      await ref.refresh(_ownerBookingsProvider.future);
+      ref.invalidate(ownerStatsProvider);
       if (context.mounted) {
         HapticFeedback.heavyImpact();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -239,10 +244,80 @@ class _OwnerBookingCard extends ConsumerWidget {
           ),
         );
       }
-    } on AppException catch (e) {
+    } catch (e) {
+      String msg = 'Failed to cancel booking';
+      if (e is DioException) {
+        msg = e.response?.data?['message'] ?? e.message ?? msg;
+      } else if (e is AppException) {
+        msg = e.message;
+      }
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: AppColors.error, behavior: SnackBarBehavior.floating),
+          SnackBar(content: Text(msg), backgroundColor: AppColors.error, behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
+  }
+
+  Future<void> _collectPayment(BuildContext context, WidgetRef ref) async {
+    HapticFeedback.lightImpact();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Row(children: [
+          Icon(Icons.payments_outlined, color: AppColors.primary),
+          Gap(12),
+          Text('Collect Payment', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        ]),
+        content: Text(
+          'Confirm cash collection of ${AppFormatters.formatCurrency(item.totalAmount)} for this booking? This will update the payment status to PAID and update your revenue.',
+          style: const TextStyle(fontSize: 13, color: AppColors.textSecondaryLight, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            child: const Text('Yes, Collected'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref.read(apiClientProvider).patch(
+        '/bookings/${item.bookingId}/collect-payment',
+      );
+      await ref.refresh(_ownerBookingsProvider.future);
+      ref.invalidate(ownerStatsProvider);
+      if (context.mounted) {
+        HapticFeedback.heavyImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Payment marked as Collected successfully!'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      String msg = 'Failed to collect payment';
+      if (e is DioException) {
+        msg = e.response?.data?['message'] ?? e.message ?? msg;
+      } else if (e is AppException) {
+        msg = e.message;
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: AppColors.error, behavior: SnackBarBehavior.floating),
         );
       }
     }
@@ -413,28 +488,81 @@ class _OwnerBookingCard extends ConsumerWidget {
               ],
             ),
           ),
-          // ── Cancel Action (for active bookings only) ──
+          // ── Cancel & Collect Actions ──
           if (item.bookingStatus.toUpperCase() != 'CANCELLED' &&
               item.bookingStatus.toUpperCase() != 'COMPLETED') ...[  
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-              child: OutlinedButton.icon(
-                onPressed: () => _cancelBooking(context, ref),
-                icon: const Icon(Icons.cancel_outlined, size: 16, color: AppColors.error),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _cancelBooking(context, ref),
+                      icon: const Icon(Icons.cancel_outlined, size: 16, color: AppColors.error),
+                      label: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.error,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 42),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        side: const BorderSide(
+                            color: AppColors.error, width: 0.8),
+                      ),
+                    ),
+                  ),
+                  if (item.paymentStatus.toUpperCase() != 'PAID') ...[
+                    const Gap(12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _collectPayment(context, ref),
+                        icon: const Icon(Icons.payments_outlined, size: 16, color: Colors.white),
+                        label: const Text(
+                          'Collected',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          minimumSize: const Size(0, 42),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          elevation: 0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ] else if (item.paymentStatus.toUpperCase() != 'PAID' && item.bookingStatus.toUpperCase() != 'CANCELLED') ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              child: ElevatedButton.icon(
+                onPressed: () => _collectPayment(context, ref),
+                icon: const Icon(Icons.payments_outlined, size: 16, color: Colors.white),
                 label: const Text(
-                  'Cancel Booking',
+                  'Collect Payment',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.error,
+                    color: Colors.white,
                   ),
                 ),
-                style: OutlinedButton.styleFrom(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
                   minimumSize: const Size(double.infinity, 42),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
-                  side: const BorderSide(
-                      color: AppColors.error, width: 0.8),
+                  elevation: 0,
                 ),
               ),
             ),

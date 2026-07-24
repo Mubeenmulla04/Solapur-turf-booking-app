@@ -16,4 +16,7 @@ public class TurfOwnerDto {
     private String bankIfsc;
     private String bankName;
     private VerificationStatus status;
+    private String subscriptionStatus;
+    private java.time.LocalDateTime trialEndsAt;
+    private java.time.LocalDateTime subscriptionExpiresAt;
 }

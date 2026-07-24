@@ -340,22 +340,22 @@ public class GlobalExceptionHandler {
 
     /**
      * Catch-all handler for any unexpected exception not covered above.
-     * The real error is logged but NOT exposed to the client (security).
+     * The real error is logged server-side but NOT exposed to the client (security best practice).
      * Flutter should: show "Something went wrong" with retry button.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex,
             HttpServletRequest request) {
-        log.error("Unhandled exception at {}: {} - {}", request.getRequestURI(), ex.getClass().getName(), ex.getMessage(), ex);
-        String debugMessage = "Ex: " + ex.getClass().getSimpleName() + " - " + ex.getMessage();
-        if (ex.getCause() != null) {
-            debugMessage += " || Cause: " + ex.getCause().getClass().getSimpleName() + " - " + ex.getCause().getMessage();
-        }
+        // Log full stack trace internally — never expose to client
+        log.error("Unhandled exception at {}: {} - {}",
+                request.getRequestURI(),
+                ex.getClass().getName(),
+                ex.getMessage(), ex);
         return build(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal Server Error",
-                debugMessage,
+                "An unexpected error occurred. Please try again later.",
                 request);
     }
 }

@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -304,6 +307,32 @@ class OwnerProfileScreen extends ConsumerWidget {
                       ),
                     ),
                     _SettingsTile(
+                      icon: Icons.percent_rounded,
+                      title: 'GST Number',
+                      subtitle: ownerProfile.valueOrNull?['gstNumber']?.toString() ?? 'Not set',
+                      onTap: () => _showEditDialog(
+                        context,
+                        ref,
+                        'gstNumber',
+                        'GST Number',
+                        ownerProfile.valueOrNull?['gstNumber']?.toString() ?? '',
+                        TextInputType.text,
+                      ),
+                    ),
+                    _SettingsTile(
+                      icon: Icons.badge_outlined,
+                      title: 'PAN Number',
+                      subtitle: ownerProfile.valueOrNull?['panNumber']?.toString() ?? 'Not set',
+                      onTap: () => _showEditDialog(
+                        context,
+                        ref,
+                        'panNumber',
+                        'PAN Number',
+                        ownerProfile.valueOrNull?['panNumber']?.toString() ?? '',
+                        TextInputType.text,
+                      ),
+                    ),
+                    _SettingsTile(
                       icon: Icons.currency_rupee_rounded,
                       title: 'Total Earnings',
                       subtitle: '₹${ownerProfile.valueOrNull?['totalEarnings'] ?? '0'}',
@@ -324,6 +353,12 @@ class OwnerProfileScreen extends ConsumerWidget {
                     _SectionLabel('Verification Status'),
                     _VerificationBanner(
                       status: ownerProfile.valueOrNull?['verificationStatus']?.toString() ?? 'PENDING',
+                    ),
+                    const Gap(12),
+                    _KycDocumentsCard(
+                      profile: ownerProfile.valueOrNull ?? {},
+                      onUpload: (type) => _uploadDocument(context, ref, type),
+                      onView: (path) => _viewDocument(context, path),
                     ),
 
                     const Gap(24),
@@ -406,6 +441,89 @@ class OwnerProfileScreen extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _uploadDocument(BuildContext context, WidgetRef ref, String docType) async {
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+      if (pickedFile == null) return;
+      
+      final dio = ref.read(apiClientProvider);
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(pickedFile.path, filename: pickedFile.path.split('/').last),
+        'documentType': docType,
+      });
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Row(children: [SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)), Gap(12), Text('Uploading document... ')]), duration: Duration(seconds: 1)),
+        );
+      }
+      
+      await dio.post('/owners/me/documents', data: formData);
+      ref.invalidate(_ownerProfileProvider);
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('✅ Document uploaded successfully!'), backgroundColor: AppColors.success),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+
+  void _viewDocument(BuildContext context, String relativeUrl) {
+    if (relativeUrl.isEmpty) return;
+    final baseDomain = AppConstants.apiBaseUrl.replaceAll('/api', '');
+    final fullUrl = relativeUrl.startsWith('http') ? relativeUrl : '$baseDomain$relativeUrl';
+    
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: InteractiveViewer(
+                child: Image.network(
+                  fullUrl,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const SizedBox(
+                      height: 300,
+                      child: Center(child: CircularProgressIndicator(color: Colors.white)),
+                    );
+                  },
+                  errorBuilder: (c, e, s) => Container(
+                    height: 200,
+                    color: Colors.white,
+                    alignment: Alignment.center,
+                    child: const Text('Failed to load document preview', style: TextStyle(color: AppColors.error)),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -722,6 +840,100 @@ class _VerificationBanner extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _KycDocumentsCard extends StatelessWidget {
+  final Map<String, dynamic> profile;
+  final Function(String) onUpload;
+  final Function(String) onView;
+
+  const _KycDocumentsCard({
+    required this.profile,
+    required this.onUpload,
+    required this.onView,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final docs = profile['verificationDocuments'] as Map<String, dynamic>? ?? {};
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.dividerLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'KYC Documents',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimaryLight),
+          ),
+          const Gap(16),
+          _buildDocRow('panDoc', 'PAN Card (Front)', docs['panDoc']?.toString()),
+          const Gap(12),
+          _buildDocRow('gstDoc', 'GST Certificate', docs['gstDoc']?.toString()),
+          const Gap(12),
+          _buildDocRow('leaseDoc', 'Lease/Ownership Agreement', docs['leaseDoc']?.toString()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocRow(String key, String label, String? url) {
+    final isUploaded = url != null && url.isNotEmpty;
+
+    return Row(
+      children: [
+        Icon(
+          isUploaded ? Icons.check_circle_rounded : Icons.pending_actions_rounded,
+          color: isUploaded ? AppColors.success : AppColors.textHint,
+          size: 20,
+        ),
+        const Gap(12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimaryLight)),
+              Text(
+                isUploaded ? 'Uploaded successfully' : 'Not uploaded yet',
+                style: TextStyle(fontSize: 11, color: isUploaded ? AppColors.success : AppColors.textSecondaryLight),
+              ),
+            ],
+          ),
+        ),
+        if (isUploaded) ...[
+          IconButton(
+            icon: const Icon(Icons.visibility_outlined, color: AppColors.primary, size: 20),
+            tooltip: 'View Document',
+            onPressed: () => onView(url),
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.textSecondaryLight, size: 20),
+            tooltip: 'Re-upload',
+            onPressed: () => onUpload(key),
+          ),
+        ] else ...[
+          ElevatedButton(
+            onPressed: () => onUpload(key),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Upload', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ],
     );
   }
 }

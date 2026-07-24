@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../providers/admin_providers.dart';
+import 'admin_dashboard_screen.dart';
 
 class AdminUserManagementScreen extends ConsumerStatefulWidget {
   const AdminUserManagementScreen({super.key});
@@ -122,6 +123,7 @@ class _AdminUserManagementScreenState
                     user: filtered[i],
                     onStatusChanged: (userId, isActive) =>
                         _toggleStatus(userId, isActive),
+                    onDelete: (userId) => _deleteUser(userId),
                   ),
                 );
               },
@@ -137,6 +139,7 @@ class _AdminUserManagementScreenState
     try {
       await dio.patch('/users/$userId/status', data: {'isActive': isActive});
       ref.invalidate(adminAllUsersProvider);
+      ref.invalidate(adminStatsProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(isActive ? '✅ User activated' : '🚫 User suspended'),
@@ -158,20 +161,53 @@ class _AdminUserManagementScreenState
       }
     }
   }
+
+  Future<void> _deleteUser(String userId) async {
+    final dio = ref.read(apiClientProvider);
+    try {
+      await dio.delete('/users/$userId');
+      ref.invalidate(adminAllUsersProvider);
+      ref.invalidate(adminStatsProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text('🗑️ User deleted successfully'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.success,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text('Failed to delete user'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.all(16),
+        ));
+      }
+    }
+  }
 }
 
 class _UserCard extends StatelessWidget {
   final Map<String, dynamic> user;
   final Future<void> Function(String userId, bool isActive) onStatusChanged;
+  final Future<void> Function(String userId) onDelete;
 
-  const _UserCard({required this.user, required this.onStatusChanged});
+  const _UserCard({
+    required this.user,
+    required this.onStatusChanged,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
     final name = user['fullName'] as String? ?? 'Unknown';
     final email = user['email'] as String? ?? '';
     final role = user['role'] as String? ?? 'USER';
-    final isActive = user['isActive'] as bool? ?? true;
+    final isActive = (user['isActive'] ?? user['active']) as bool? ?? true;
     final userId = user['userId'] as String? ?? '';
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
 
@@ -271,32 +307,48 @@ class _UserCard extends StatelessWidget {
           const Gap(8),
           // Toggle button
           if (role != 'ADMIN')
-            GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                _confirmToggle(context, userId, isActive, name);
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? AppColors.error.withOpacity(0.08)
-                      : AppColors.success.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isActive
-                        ? AppColors.error.withOpacity(0.3)
-                        : AppColors.success.withOpacity(0.3),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    _confirmToggle(context, userId, isActive, name);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? AppColors.error.withOpacity(0.08)
+                          : AppColors.success.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isActive
+                            ? AppColors.error.withOpacity(0.3)
+                            : AppColors.success.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Text(
+                      isActive ? 'Suspend' : 'Activate',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: isActive ? AppColors.error : AppColors.success),
+                    ),
                   ),
                 ),
-                child: Text(
-                  isActive ? 'Suspend' : 'Activate',
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: isActive ? AppColors.error : AppColors.success),
+                const Gap(8),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 22),
+                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                  tooltip: 'Delete User',
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    _confirmDelete(context, userId, name);
+                  },
                 ),
-              ),
+              ],
             ),
         ],
       ),
@@ -332,6 +384,38 @@ class _UserCard extends StatelessWidget {
               onStatusChanged(userId, !isActive);
             },
             child: Text(isActive ? 'Suspend' : 'Activate'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, String userId, String name) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Delete User?',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(
+          'Are you sure you want to permanently delete "$name"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              onDelete(userId);
+            },
+            child: const Text('Delete'),
           ),
         ],
       ),

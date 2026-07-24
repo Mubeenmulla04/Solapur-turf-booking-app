@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -69,6 +70,7 @@ public class BookingController {
     // ─── All bookings (admin) ─────────────────────────────────────────────────
     /** GET /api/bookings */
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PageResponse<BookingDto>>> getAllBookings(
             @RequestParam(defaultValue = "1")  int page,
             @RequestParam(defaultValue = "10") int limit) {
@@ -79,6 +81,7 @@ public class BookingController {
     // ─── Owner views ──────────────────────────────────────────────────────────
     /** GET /api/bookings/owner-bookings */
     @GetMapping("/owner-bookings")
+    @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<ApiResponse<PageResponse<BookingDto>>> getOwnerBookings(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(defaultValue = "1")  int page,
@@ -90,6 +93,7 @@ public class BookingController {
 
     /** GET /api/bookings/owner-stats */
     @GetMapping("/owner-stats")
+    @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getOwnerStats(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Map<String, Object> stats = bookingService.getOwnerStats(userDetails.getUser().getId());
@@ -98,6 +102,7 @@ public class BookingController {
 
     /** GET /api/bookings/owner-analytics */
     @GetMapping("/owner-analytics")
+    @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getOwnerAnalytics(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Map<String, Object> analytics = bookingService.getOwnerAnalytics(userDetails.getUser().getId());
@@ -110,6 +115,7 @@ public class BookingController {
      * Owner manually confirms a PENDING booking (e.g. after offline payment).
      */
     @PatchMapping("/{id}/confirm")
+    @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<ApiResponse<BookingDto>> confirmBooking(
             @PathVariable UUID id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -122,11 +128,25 @@ public class BookingController {
      * Owner marks an active booking as completed after the session ends.
      */
     @PatchMapping("/{id}/complete")
+    @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<ApiResponse<BookingDto>> completeBooking(
             @PathVariable UUID id,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         BookingDto dto = bookingService.completeBooking(id, userDetails.getUser().getId());
         return ResponseEntity.ok(ApiResponse.success(dto, "Booking marked as completed"));
+    }
+
+    /**
+     * PATCH /api/bookings/{id}/collect-payment
+     * Owner marks cash payment as collected.
+     */
+    @PatchMapping("/{id}/collect-payment")
+    @PreAuthorize("hasRole('OWNER')")
+    public ResponseEntity<ApiResponse<BookingDto>> collectPayment(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        BookingDto dto = bookingService.collectPayment(id, userDetails.getUser().getId());
+        return ResponseEntity.ok(ApiResponse.success(dto, "Payment collected successfully"));
     }
 
     // ─── Cancel & Reschedule ─────────────────────────────────────────────────

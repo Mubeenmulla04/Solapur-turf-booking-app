@@ -13,6 +13,8 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
 
 import '../../../turf/domain/entities/turf_listing.dart';
+import 'owner_manage_turfs_screen.dart';
+import 'owner_dashboard_screen.dart';
 
 class OwnerCreateTurfScreen extends ConsumerStatefulWidget {
   final TurfListing? editTurf;
@@ -202,6 +204,9 @@ class _OwnerCreateTurfScreenState extends ConsumerState<OwnerCreateTurfScreen> {
           data: formData,
         );
       }
+
+      ref.invalidate(myTurfsProvider);
+      ref.invalidate(ownerStatsProvider);
 
       if (mounted) {
         HapticFeedback.heavyImpact();

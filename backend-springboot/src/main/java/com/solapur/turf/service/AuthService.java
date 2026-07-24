@@ -95,9 +95,9 @@ public class AuthService {
                     .contactNumber(request.getContactNumber())
                     .addressLine1(request.getAddressLine1())
                     .addressLine2(request.getAddressLine2())
-                    .city(request.getCity())
-                    .state(request.getState())
-                    .pinCode(request.getPinCode())
+                    .city("Solapur")          // Auto-set: app is Solapur-specific
+                    .state("Maharashtra")     // Auto-set: app is Solapur-specific
+                    .pinCode(isBlank(request.getPinCode()) ? "413001" : request.getPinCode()) // Default Solapur PIN
                     .upiId(request.getUpiId())
                     .bankAccountNumber(request.getBankAccountNumber())
                     .ifscCode(request.getIfscCode())
@@ -305,11 +305,9 @@ public class AuthService {
     private void validateOwnerFields(RegisterRequest req) {
         if (isBlank(req.getBusinessName()))  throw new ApiException("Business name is required", HttpStatus.BAD_REQUEST);
         if (isBlank(req.getContactNumber())) throw new ApiException("Business contact number is required", HttpStatus.BAD_REQUEST);
-        if (isBlank(req.getAddressLine1()))  throw new ApiException("Address is required", HttpStatus.BAD_REQUEST);
-        if (isBlank(req.getCity()))          throw new ApiException("City is required", HttpStatus.BAD_REQUEST);
-        if (isBlank(req.getState()))         throw new ApiException("State is required", HttpStatus.BAD_REQUEST);
-        if (isBlank(req.getPinCode()))       throw new ApiException("PIN code is required", HttpStatus.BAD_REQUEST);
+        if (isBlank(req.getAddressLine1()))  throw new ApiException("Turf address is required", HttpStatus.BAD_REQUEST);
         if (isBlank(req.getUpiId()))         throw new ApiException("UPI ID is required for settlements", HttpStatus.BAD_REQUEST);
+        // City, State, PIN are auto-set to Solapur defaults — no validation needed
     }
 
     private boolean isBlank(String s) {
@@ -327,6 +325,7 @@ public class AuthService {
                 .phone(user.getPhone())
                 .fullName(user.getFullName())
                 .role(user.getRole())
+                .isActive(user.isActive())
                 .walletBalance(balance)
                 .loyaltyPoints(user.getLoyaltyPoints() != null ? user.getLoyaltyPoints() : 0)
                 .build();

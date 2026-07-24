@@ -21,6 +21,8 @@ class TurfRepositoryImpl implements TurfRepository {
     String? sortBy,
     int page = 1,
     int limit = 10,
+    double? userLat,
+    double? userLng,
   }) async {
     try {
       final models = await _remote.getTurfs(
@@ -32,6 +34,8 @@ class TurfRepositoryImpl implements TurfRepository {
         sortBy: sortBy,
         page: page,
         limit: limit,
+        userLat: userLat,
+        userLng: userLng,
       );
       return Right(models.map((m) => m.toDomain()).toList());
     } on AppException catch (e) {

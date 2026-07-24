@@ -39,4 +39,5 @@ public class TurfListingDto {
     private LocalTime closingTime;
     private boolean isActive;
     private boolean isVerified;
+    private boolean isFeatured;
 }

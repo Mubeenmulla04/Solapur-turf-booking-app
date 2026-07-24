@@ -1,6 +1,7 @@
 package com.solapur.turf.dto;
 
 import com.solapur.turf.enums.UserRole;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 import java.util.List;
@@ -13,6 +14,7 @@ public class UserDto {
     private String phone;
     private String fullName;
     private UserRole role;
+    @JsonProperty("isActive")
     private boolean isActive;
     private String fcmToken;
     private List<String> imageUrls;

@@ -14,6 +14,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
+import java.util.List;
+
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +25,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final com.solapur.turf.repository.UserWalletRepository userWalletRepository;
     private final PasswordEncoder passwordEncoder;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     public UserDto getUserProfile(UUID userId) {
         User user = userRepository.findById(userId)
@@ -143,8 +147,12 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException("User not found", HttpStatus.NOT_FOUND));
         
+        if (newRole == null || newRole.trim().isEmpty()) {
+            throw new ApiException("Role cannot be null or empty", HttpStatus.BAD_REQUEST);
+        }
+
         try {
-            UserRole role = UserRole.valueOf(newRole.toUpperCase());
+            UserRole role = UserRole.valueOf(newRole.trim().toUpperCase());
             user.setRole(role);
             userRepository.save(user);
             return mapToUserDto(user);
@@ -153,11 +161,113 @@ public class UserService {
         }
     }
 
+    @Transactional
     public void deleteUser(UUID id) {
         if (!userRepository.existsById(id)) {
             throw new ApiException("User not found", HttpStatus.NOT_FOUND);
         }
-        userRepository.deleteById(id);
+
+        // 1. Get owner ID if exists
+        UUID ownerId = null;
+        try {
+            ownerId = jdbcTemplate.queryForObject(
+                "SELECT id FROM turf_owners WHERE user_id = ?",
+                new Object[]{id},
+                UUID.class
+            );
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            // Not an owner
+        }
+
+        if (ownerId != null) {
+            // Delete owner-related data
+            // a. Find all turf IDs owned by this owner
+            List<UUID> turfIds = jdbcTemplate.query(
+                "SELECT id FROM turf_listings WHERE owner_id = ?",
+                new Object[]{ownerId},
+                (rs, rowNum) -> (UUID) rs.getObject("id")
+            );
+
+            for (UUID turfId : turfIds) {
+                jdbcTemplate.update("DELETE FROM availability_slots WHERE turf_id = ?", turfId);
+                jdbcTemplate.update("DELETE FROM turf_operating_hours WHERE turf_id = ?", turfId);
+                jdbcTemplate.update("DELETE FROM turf_images WHERE turf_id = ?", turfId);
+                
+                // Get bookings for this turf to delete their dependents
+                List<UUID> bookingIds = jdbcTemplate.query(
+                    "SELECT id FROM bookings WHERE turf_id = ?",
+                    new Object[]{turfId},
+                    (rs, rowNum) -> (UUID) rs.getObject("id")
+                );
+                for (UUID bookingId : bookingIds) {
+                    jdbcTemplate.update("DELETE FROM refunds WHERE booking_id = ?", bookingId);
+                    jdbcTemplate.update("DELETE FROM transactions WHERE booking_id = ?", bookingId);
+                }
+                jdbcTemplate.update("DELETE FROM bookings WHERE turf_id = ?", turfId);
+                jdbcTemplate.update("DELETE FROM reviews WHERE turf_id = ?", turfId);
+            }
+
+            // Delete turfs
+            jdbcTemplate.update("DELETE FROM turf_listings WHERE owner_id = ?", ownerId);
+
+            // Delete settlements
+            jdbcTemplate.update("DELETE FROM settlements WHERE owner_id = ?", ownerId);
+
+            // Delete tournaments created by this owner
+            jdbcTemplate.update("DELETE FROM tournaments WHERE creator_id = ? AND creator_type = 'OWNER'", ownerId);
+
+            // Delete owner profile
+            jdbcTemplate.update("DELETE FROM turf_owners WHERE id = ?", ownerId);
+        }
+
+        // 2. Delete user-specific data (for both customers and owners)
+        UUID walletId = null;
+        try {
+            walletId = jdbcTemplate.queryForObject(
+                "SELECT id FROM user_wallets WHERE user_id = ?",
+                new Object[]{id},
+                UUID.class
+            );
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {}
+
+        if (walletId != null) {
+            jdbcTemplate.update("DELETE FROM wallet_transactions WHERE wallet_id = ?", walletId);
+            jdbcTemplate.update("DELETE FROM user_wallets WHERE id = ?", walletId);
+        }
+
+        // Get bookings by this user to delete their dependents
+        List<UUID> userBookingIds = jdbcTemplate.query(
+            "SELECT id FROM bookings WHERE user_id = ?",
+            new Object[]{id},
+            (rs, rowNum) -> (UUID) rs.getObject("id")
+        );
+        for (UUID bookingId : userBookingIds) {
+            jdbcTemplate.update("DELETE FROM refunds WHERE booking_id = ?", bookingId);
+            jdbcTemplate.update("DELETE FROM transactions WHERE booking_id = ?", bookingId);
+        }
+        jdbcTemplate.update("DELETE FROM bookings WHERE user_id = ?", id);
+
+        // Delete team dependencies
+        jdbcTemplate.update("DELETE FROM team_members WHERE user_id = ?", id);
+        
+        List<UUID> captainedTeamIds = jdbcTemplate.query(
+            "SELECT id FROM teams WHERE captain_id = ?",
+            new Object[]{id},
+            (rs, rowNum) -> (UUID) rs.getObject("id")
+        );
+        for (UUID teamId : captainedTeamIds) {
+            jdbcTemplate.update("DELETE FROM team_members WHERE team_id = ?", teamId);
+            jdbcTemplate.update("DELETE FROM tournament_registrations WHERE team_id = ?", teamId);
+        }
+        jdbcTemplate.update("DELETE FROM teams WHERE captain_id = ?", id);
+
+        jdbcTemplate.update("DELETE FROM refunds WHERE user_id = ?", id);
+        jdbcTemplate.update("DELETE FROM transactions WHERE user_id = ?", id);
+        jdbcTemplate.update("DELETE FROM reviews WHERE user_id = ?", id);
+        jdbcTemplate.update("DELETE FROM audit_logs WHERE user_id = ?", id);
+
+        // Finally, delete the user
+        jdbcTemplate.update("DELETE FROM users WHERE id = ?", id);
     }
 
     public void updateFcmToken(UUID userId, String fcmToken) {

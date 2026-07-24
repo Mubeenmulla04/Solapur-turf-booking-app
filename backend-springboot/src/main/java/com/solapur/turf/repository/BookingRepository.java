@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -57,4 +58,26 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
             UUID ownerId, LocalDate startDate, LocalDate endDate, BookingStatus status);
 
     boolean existsByUserIdAndTurfIdAndBookingStatus(UUID userId, UUID turfId, BookingStatus status);
+
+    boolean existsByUserIdAndTurfId(UUID userId, UUID turfId);
+
+    // ── Aggregate queries (replaces in-memory findAll scans) ─────────────────
+
+    /**
+     * Returns the total sum of all finalAmount values across all bookings.
+     * Replaces bookingRepository.findAll().stream().sum() in AdminService.
+     */
+    @Query("SELECT COALESCE(SUM(b.finalAmount), 0) FROM Booking b WHERE b.finalAmount IS NOT NULL")
+    BigDecimal sumTotalRevenue();
+
+    /**
+     * Returns monthly revenue for the last N months as [month_start_date, revenue] pairs.
+     * month_start_date is the first day of the month (LocalDate).
+     */
+    @Query("SELECT FUNCTION('date_trunc', 'month', b.bookingDate), COALESCE(SUM(b.finalAmount), 0) " +
+           "FROM Booking b " +
+           "WHERE b.bookingDate >= :startDate AND b.finalAmount IS NOT NULL " +
+           "GROUP BY FUNCTION('date_trunc', 'month', b.bookingDate) " +
+           "ORDER BY FUNCTION('date_trunc', 'month', b.bookingDate) ASC")
+    List<Object[]> findMonthlyRevenueSince(@Param("startDate") LocalDate startDate);
 }

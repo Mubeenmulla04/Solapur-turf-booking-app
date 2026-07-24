@@ -12,6 +12,8 @@ abstract class TurfRemoteDataSource {
     String? sortBy,
     int page,
     int limit,
+    double? userLat,
+    double? userLng,
   });
 
   Future<TurfListingModel> getTurfById(String turfId);
@@ -69,6 +71,8 @@ class TurfRemoteDataSourceImpl implements TurfRemoteDataSource {
     String? sortBy,
     int page = 1,
     int limit = 10,
+    double? userLat,
+    double? userLng,
   }) async {
     try {
       final params = <String, dynamic>{
@@ -80,6 +84,8 @@ class TurfRemoteDataSourceImpl implements TurfRemoteDataSource {
         if (minPrice != null) 'minPrice': minPrice,
         if (maxPrice != null) 'maxPrice': maxPrice,
         if (sortBy != null) 'sortBy': sortBy,
+        if (userLat != null) 'userLat': userLat,
+        if (userLng != null) 'userLng': userLng,
       };
       final response = await _dio.get(
         '/turfs',

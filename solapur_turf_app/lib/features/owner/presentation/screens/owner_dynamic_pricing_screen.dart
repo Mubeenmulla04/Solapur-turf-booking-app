@@ -228,9 +228,7 @@ class OwnerDynamicPricingScreen extends ConsumerWidget {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, color: AppColors.textSecondaryLight, size: 20),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
       ),
     );
   }

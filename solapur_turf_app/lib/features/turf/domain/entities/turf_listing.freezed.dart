@@ -36,6 +36,7 @@ mixin _$TurfListing {
   double? get latitude => throw _privateConstructorUsedError;
   double? get longitude => throw _privateConstructorUsedError;
   List<String>? get imageUrls => throw _privateConstructorUsedError;
+  bool get isFeatured => throw _privateConstructorUsedError;
 
   /// Create a copy of TurfListing
   /// with the given fields replaced by the non-null parameter values.
@@ -70,7 +71,8 @@ abstract class $TurfListingCopyWith<$Res> {
       String? description,
       double? latitude,
       double? longitude,
-      List<String>? imageUrls});
+      List<String>? imageUrls,
+      bool isFeatured});
 }
 
 /// @nodoc
@@ -108,6 +110,7 @@ class _$TurfListingCopyWithImpl<$Res, $Val extends TurfListing>
     Object? latitude = freezed,
     Object? longitude = freezed,
     Object? imageUrls = freezed,
+    Object? isFeatured = null,
   }) {
     return _then(_value.copyWith(
       turfId: null == turfId
@@ -190,6 +193,10 @@ class _$TurfListingCopyWithImpl<$Res, $Val extends TurfListing>
           ? _value.imageUrls
           : imageUrls // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      isFeatured: null == isFeatured
+          ? _value.isFeatured
+          : isFeatured // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -222,7 +229,8 @@ abstract class _$$TurfListingImplCopyWith<$Res>
       String? description,
       double? latitude,
       double? longitude,
-      List<String>? imageUrls});
+      List<String>? imageUrls,
+      bool isFeatured});
 }
 
 /// @nodoc
@@ -258,6 +266,7 @@ class __$$TurfListingImplCopyWithImpl<$Res>
     Object? latitude = freezed,
     Object? longitude = freezed,
     Object? imageUrls = freezed,
+    Object? isFeatured = null,
   }) {
     return _then(_$TurfListingImpl(
       turfId: null == turfId
@@ -340,6 +349,10 @@ class __$$TurfListingImplCopyWithImpl<$Res>
           ? _value._imageUrls
           : imageUrls // ignore: cast_nullable_to_non_nullable
               as List<String>?,
+      isFeatured: null == isFeatured
+          ? _value.isFeatured
+          : isFeatured // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -367,7 +380,8 @@ class _$TurfListingImpl implements _TurfListing {
       this.description,
       this.latitude,
       this.longitude,
-      final List<String>? imageUrls})
+      final List<String>? imageUrls,
+      this.isFeatured = false})
       : _peakHours = peakHours,
         _amenities = amenities,
         _imageUrls = imageUrls;
@@ -437,8 +451,12 @@ class _$TurfListingImpl implements _TurfListing {
   }
 
   @override
+  @JsonKey()
+  final bool isFeatured;
+
+  @override
   String toString() {
-    return 'TurfListing(turfId: $turfId, turfName: $turfName, address: $address, city: $city, state: $state, pincode: $pincode, sportType: $sportType, surfaceType: $surfaceType, hourlyRate: $hourlyRate, isActive: $isActive, ratingAverage: $ratingAverage, totalReviews: $totalReviews, size: $size, peakHourRate: $peakHourRate, peakHours: $peakHours, amenities: $amenities, description: $description, latitude: $latitude, longitude: $longitude, imageUrls: $imageUrls)';
+    return 'TurfListing(turfId: $turfId, turfName: $turfName, address: $address, city: $city, state: $state, pincode: $pincode, sportType: $sportType, surfaceType: $surfaceType, hourlyRate: $hourlyRate, isActive: $isActive, ratingAverage: $ratingAverage, totalReviews: $totalReviews, size: $size, peakHourRate: $peakHourRate, peakHours: $peakHours, amenities: $amenities, description: $description, latitude: $latitude, longitude: $longitude, imageUrls: $imageUrls, isFeatured: $isFeatured)';
   }
 
   @override
@@ -479,7 +497,9 @@ class _$TurfListingImpl implements _TurfListing {
             (identical(other.longitude, longitude) ||
                 other.longitude == longitude) &&
             const DeepCollectionEquality()
-                .equals(other._imageUrls, _imageUrls));
+                .equals(other._imageUrls, _imageUrls) &&
+            (identical(other.isFeatured, isFeatured) ||
+                other.isFeatured == isFeatured));
   }
 
   @override
@@ -504,7 +524,8 @@ class _$TurfListingImpl implements _TurfListing {
         description,
         latitude,
         longitude,
-        const DeepCollectionEquality().hash(_imageUrls)
+        const DeepCollectionEquality().hash(_imageUrls),
+        isFeatured
       ]);
 
   /// Create a copy of TurfListing
@@ -537,7 +558,8 @@ abstract class _TurfListing implements TurfListing {
       final String? description,
       final double? latitude,
       final double? longitude,
-      final List<String>? imageUrls}) = _$TurfListingImpl;
+      final List<String>? imageUrls,
+      final bool isFeatured}) = _$TurfListingImpl;
 
   @override
   String get turfId;
@@ -579,6 +601,8 @@ abstract class _TurfListing implements TurfListing {
   double? get longitude;
   @override
   List<String>? get imageUrls;
+  @override
+  bool get isFeatured;
 
   /// Create a copy of TurfListing
   /// with the given fields replaced by the non-null parameter values.
